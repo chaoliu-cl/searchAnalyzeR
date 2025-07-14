@@ -32,6 +32,13 @@ analysis. Key capabilities include:
 
 \examples{
 # Initialize with search results
+search_data <- data.frame(
+  id = paste0("art", 1:100),
+  title = paste("Article", 1:100),
+  abstract = paste("Abstract for article", 1:100),
+  source = "PubMed",
+  date = Sys.Date() - sample(1:365, 100, replace = TRUE)
+)
 
 gold_standard <- paste0("art", sample(1:100, 20))
 

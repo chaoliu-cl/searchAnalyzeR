@@ -45,6 +45,8 @@ Imports:
     jsonlite (>= 1.8.0),
     openxlsx (>= 4.2.5),
     stringdist (>= 0.9.10),
+    rentrez (>= 1.2.3),
+    xml2 (>= 1.3.0),
     stats,
     utils
 Suggests:
@@ -61,8 +63,6 @@ Suggests:
     rmarkdown (>= 2.20),
     knitr (>= 1.42),
     glue (>= 1.6.0),
-    rentrez (>= 1.2.3),
-    xml2 (>= 1.3.0),
     patchwork (>= 1.1.0),
     revtools,
     litsearchr,
