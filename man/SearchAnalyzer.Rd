@@ -30,30 +30,6 @@ analysis. Key capabilities include:
 }
 }
 
-\examples{
-# Initialize with search results
-search_data <- data.frame(
-  id = paste0("art", 1:100),
-  title = paste("Article", 1:100),
-  abstract = paste("Abstract for article", 1:100),
-  source = "PubMed",
-  date = Sys.Date() - sample(1:365, 100, replace = TRUE)
-)
-
-gold_standard <- paste0("art", sample(1:100, 20))
-
-analyzer <- SearchAnalyzer$new(
-  search_results = search_data,
-  gold_standard = gold_standard
-)
-
-# Calculate metrics
-metrics <- analyzer$calculate_metrics()
-
-# Generate overview plot
-overview_plot <- analyzer$visualize_performance("overview")
-
-}
 \section{Public fields}{
 \if{html}{\out{<div class="r6-fields">}}
 \describe{

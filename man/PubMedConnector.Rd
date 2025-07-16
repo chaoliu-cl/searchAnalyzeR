@@ -14,7 +14,8 @@ PubMed Search Interface
 
 This class uses the rentrez package to interface with NCBI's E-utilities
 to search PubMed and retrieve article metadata. Results are automatically
-formatted for use with SearchAnalyzer.
+formatted for use with SearchAnalyzer. If rentrez is not available,
+it provides simulated data for demonstration purposes.
 }
 \section{Methods}{
 
@@ -55,6 +56,8 @@ metrics <- analyzer$calculate_metrics()
 \item{\code{formatted_results}}{Formatted results ready for analysis}
 
 \item{\code{search_metadata}}{Metadata about the last search}
+
+\item{\code{use_simulation}}{Flag indicating if simulation mode is active}
 }
 \if{html}{\out{</div>}}
 }

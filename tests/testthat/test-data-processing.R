@@ -163,40 +163,41 @@ std_generic_results <- function(results) {
 clean_text <- function(text) {
   if (is.null(text) || all(is.na(text))) return(text)
 
-  text %>%
-    stringr::str_remove_all("<[^>]*>") %>%  # Remove HTML tags
-    stringr::str_squish() %>%  # Remove extra whitespace
-    stringr::str_remove_all("[^\x20-\x7E]") %>%  # Remove non-printable characters
-    dplyr::na_if("")  # Convert empty strings to NA
+  # Replace stringr functions with base R equivalents
+  text <- gsub("<[^>]*>", "", text)  # Remove HTML tags
+  text <- gsub("\\s+", " ", text)    # Replace multiple whitespace with single space
+  text <- trimws(text)               # Remove leading/trailing whitespace
+  text <- gsub("[^\x20-\x7E]", "", text)  # Remove non-printable characters
+  text[text == ""] <- NA_character_  # Convert empty strings to NA
+
+  return(text)
 }
 
 #' Mock standardize_date function
 standardize_date <- function(dates) {
   if (is.null(dates) || all(is.na(dates))) return(as.Date(NA))
 
-  # Handle different date formats
   tryCatch({
-    # First try parsing as Date if already in date format
     if (inherits(dates, "Date")) return(dates)
 
-    # Convert to character for processing
     dates <- as.character(dates)
 
-    # Try different date formats
-    parsed_dates <- dplyr::case_when(
-      # YYYY-MM-DD format
-      stringr::str_detect(dates, "^\\d{4}-\\d{2}-\\d{2}$") ~ as.Date(dates, format = "%Y-%m-%d"),
-      # MM/DD/YYYY format
-      stringr::str_detect(dates, "^\\d{1,2}/\\d{1,2}/\\d{4}$") ~ as.Date(dates, format = "%m/%d/%Y"),
-      # DD/MM/YYYY format
-      stringr::str_detect(dates, "^\\d{1,2}/\\d{1,2}/\\d{4}$") ~ as.Date(dates, format = "%d/%m/%Y"),
-      # YYYY only (assume January 1st)
-      stringr::str_detect(dates, "^\\d{4}$") ~ as.Date(paste0(dates, "-01-01")),
-      # Default: try automatic parsing
-      TRUE ~ as.Date(dates)
+    # Use base R pattern matching instead of stringr
+    parsed_dates <- ifelse(
+      grepl("^\\d{4}-\\d{2}-\\d{2}$", dates),
+      as.Date(dates, format = "%Y-%m-%d"),
+      ifelse(
+        grepl("^\\d{1,2}/\\d{1,2}/\\d{4}$", dates),
+        as.Date(dates, format = "%m/%d/%Y"),
+        ifelse(
+          grepl("^\\d{4}$", dates),
+          as.Date(paste0(dates, "-01-01")),
+          as.Date(dates)
+        )
+      )
     )
 
-    return(parsed_dates)
+    return(as.Date(parsed_dates, origin = "1970-01-01"))
   }, error = function(e) {
     warning("Could not parse some dates, returning original values")
     return(as.Date(NA))
@@ -224,17 +225,15 @@ detect_dupes <- function(results, method = "exact", similarity_threshold = 0.85)
 
 #' Mock detect_exact_dupes function (shortened from detect_exact_duplicates)
 detect_exact_dupes <- function(results) {
-  # Create composite key for exact matching
   results <- results %>%
     dplyr::mutate(
       composite_key = paste(
-        tolower(stringr::str_squish(title)),
-        tolower(stringr::str_squish(stringr::str_sub(abstract, 1, 100))),
+        tolower(trimws(title)),
+        tolower(trimws(substring(abstract, 1, 100))),
         sep = "|"
       )
     )
 
-  # Identify duplicates
   duplicate_groups <- results %>%
     dplyr::group_by(composite_key) %>%
     dplyr::mutate(
@@ -243,11 +242,9 @@ detect_exact_dupes <- function(results) {
     ) %>%
     dplyr::ungroup()
 
-  # Mark duplicates (keep first occurrence)
   results$duplicate <- duplicate_groups$group_size > 1
   results$duplicate_group <- ifelse(results$duplicate, duplicate_groups$duplicate_group, NA)
 
-  # Keep only the first occurrence of each duplicate group
   results <- results %>%
     dplyr::group_by(composite_key) %>%
     dplyr::mutate(keep = dplyr::row_number() == 1) %>%
@@ -284,14 +281,13 @@ detect_doi_dupes <- function(results) {
     return(detect_exact_dupes(results))
   }
 
-  # Clean DOIs and group by them
   results <- results %>%
     dplyr::mutate(
-      clean_doi = stringr::str_extract(tolower(doi), "10\\.\\d+/[^\\s]+"),
-      clean_doi = stringr::str_remove_all(clean_doi, "[^0-9a-z./]")
+      # Use base R regex instead of stringr
+      clean_doi = gsub("^.*?(10\\.\\d+/[^\\s]+).*$", "\\1", tolower(doi)),
+      clean_doi = gsub("[^0-9a-z./]", "", clean_doi)
     )
 
-  # Group by DOI
   results <- results %>%
     dplyr::group_by(clean_doi) %>%
     dplyr::mutate(
@@ -311,11 +307,15 @@ merge_results <- function(result_list, deduplicate = TRUE, dedup_method = "exact
     stop("result_list must be a non-empty list of data frames")
   }
 
-  # Add source tracking
-  named_results <- purrr::imap(result_list, function(df, name) {
-    df$search_source <- if (is.null(name) || name == "") paste0("source_", match(list(df), result_list)) else name
+  # Add source tracking using base R instead of purrr::imap
+  named_results <- mapply(function(df, name) {
+    df$search_source <- if (is.null(name) || name == "") {
+      paste0("source_", which(sapply(result_list, function(x) identical(x, df))))
+    } else {
+      name
+    }
     return(df)
-  })
+  }, result_list, names(result_list), SIMPLIFY = FALSE)
 
   # Combine results
   combined_results <- dplyr::bind_rows(named_results)
@@ -336,11 +336,11 @@ merge_results <- function(result_list, deduplicate = TRUE, dedup_method = "exact
     combined_results <- non_duplicates
   }
 
-  # Add merge metadata
+  # Add merge metadata - use base R instead of purrr::map_int
   attr(combined_results, "merge_info") <- list(
     sources = names(result_list),
     merge_timestamp = Sys.time(),
-    total_before_dedup = sum(purrr::map_int(result_list, nrow)),
+    total_before_dedup = sum(sapply(result_list, nrow)),
     total_after_dedup = nrow(combined_results),
     deduplication_method = if (deduplicate) dedup_method else "none"
   )

@@ -22,8 +22,8 @@
 #' }
 #' @export
 export_results <- function(search_results, file_path = NULL,
-                                  formats = c("csv", "xlsx"),
-                                  include_metadata = TRUE) {
+                           formats = c("csv", "xlsx"),
+                           include_metadata = TRUE) {
 
   # Use tempdir() by default to comply with CRAN policies
   if (is.null(file_path)) {
@@ -56,21 +56,18 @@ export_results <- function(search_results, file_path = NULL,
 #' @param file_path Output file path
 #' @param include_metadata Logical, whether to create metadata file
 #' @return File path of created file
-#' @importFrom readr write_csv
-#' @importFrom stringr str_replace
-#' @importFrom purrr map_chr
-#' @importFrom tibble tibble
+#' @importFrom utils write.csv
 export_to_csv <- function(search_results, file_path, include_metadata = TRUE) {
   # Export main data
-  readr::write_csv(search_results, file_path)
+  utils::write.csv(search_results, file_path, row.names = FALSE)
 
   # Export metadata if requested - FIXED: Handle vector values properly
   if (include_metadata && !is.null(attr(search_results, "merge_info"))) {
-    metadata_path <- stringr::str_replace(file_path, "\\.csv$", "_metadata.csv")
+    metadata_path <- gsub("\\.csv$", "_metadata.csv", file_path)
 
-    metadata_df <- tibble::tibble(
+    metadata_df <- data.frame(
       attribute = names(attr(search_results, "merge_info")),
-      value = purrr::map_chr(attr(search_results, "merge_info"), function(x) {
+      value = sapply(attr(search_results, "merge_info"), function(x) {
         # FIXED: Convert vectors and complex objects to single strings
         if (is.vector(x) && length(x) > 1) {
           paste(x, collapse = ", ")
@@ -79,10 +76,11 @@ export_to_csv <- function(search_results, file_path, include_metadata = TRUE) {
         } else {
           as.character(x)
         }
-      })
+      }),
+      stringsAsFactors = FALSE
     )
 
-    readr::write_csv(metadata_df, metadata_path)
+    utils::write.csv(metadata_df, metadata_path, row.names = FALSE)
   }
 
   return(file_path)
@@ -95,8 +93,6 @@ export_to_csv <- function(search_results, file_path, include_metadata = TRUE) {
 #' @param include_metadata Logical, whether to include metadata sheets
 #' @return File path of created file
 #' @importFrom openxlsx createWorkbook addWorksheet writeData addFilter freezePane createStyle addStyle saveWorkbook
-#' @importFrom purrr map_chr
-#' @importFrom tibble tibble
 export_to_xlsx <- function(search_results, file_path, include_metadata = TRUE) {
   # Create workbook
   wb <- openxlsx::createWorkbook()
@@ -125,9 +121,9 @@ export_to_xlsx <- function(search_results, file_path, include_metadata = TRUE) {
       merge_info <- attr(search_results, "merge_info")
 
       openxlsx::addWorksheet(wb, "Merge Info")
-      merge_df <- tibble::tibble(
+      merge_df <- data.frame(
         Attribute = names(merge_info),
-        Value = purrr::map_chr(merge_info, function(x) {
+        Value = sapply(merge_info, function(x) {
           # FIXED: Properly handle all data types for Excel
           if (is.vector(x) && length(x) > 1) {
             paste(x, collapse = ", ")
@@ -138,7 +134,8 @@ export_to_xlsx <- function(search_results, file_path, include_metadata = TRUE) {
           } else {
             as.character(x)
           }
-        })
+        }),
+        stringsAsFactors = FALSE
       )
       openxlsx::writeData(wb, "Merge Info", merge_df)
       openxlsx::addStyle(wb, "Merge Info", header_style, rows = 1, cols = 1:2)
@@ -157,7 +154,7 @@ export_to_xlsx <- function(search_results, file_path, include_metadata = TRUE) {
 
       openxlsx::addWorksheet(wb, "Statistics")
       # FIXED: Convert complex stats to simple key-value pairs
-      stats_df <- tibble::tibble(
+      stats_df <- data.frame(
         Statistic = c("Total Records", "Unique Records", "Duplicates",
                       "Missing Abstracts", "Missing Dates", "Date Range"),
         Value = c(
@@ -167,7 +164,8 @@ export_to_xlsx <- function(search_results, file_path, include_metadata = TRUE) {
           as.character(stats$missing_abstracts),
           as.character(stats$missing_dates),
           paste(as.character(stats$date_range), collapse = " to ")
-        )
+        ),
+        stringsAsFactors = FALSE
       )
       openxlsx::writeData(wb, "Statistics", stats_df)
       openxlsx::addStyle(wb, "Statistics", header_style, rows = 1, cols = 1:2)
@@ -185,12 +183,10 @@ export_to_xlsx <- function(search_results, file_path, include_metadata = TRUE) {
 #' @param search_results Data frame with search results
 #' @param file_path Output file path
 #' @return File path of created file
-#' @importFrom purrr map_chr
-#' @importFrom stringr str_split str_trim
 #' @importFrom lubridate year
 export_to_ris <- function(search_results, file_path) {
   # Convert to RIS format
-  ris_content <- purrr::map_chr(seq_len(nrow(search_results)), function(i) {
+  ris_content <- sapply(seq_len(nrow(search_results)), function(i) {
     row <- search_results[i, ]
 
     ris_entry <- c(
@@ -202,8 +198,8 @@ export_to_ris <- function(search_results, file_path) {
       if ("doi" %in% names(row) && !is.na(row$doi)) paste0("DO  - ", row$doi) else NULL,
       if ("authors" %in% names(row) && !is.na(row$authors)) {
         # Split authors and create AU entries
-        authors <- stringr::str_split(row$authors, ";|,")[[1]]
-        purrr::map_chr(stringr::str_trim(authors), ~paste0("AU  - ", .x))
+        authors <- strsplit(row$authors, ";|,")[[1]]
+        sapply(trimws(authors), function(x) paste0("AU  - ", x))
       } else NULL,
       paste0("UR  - ", row$id),
       "ER  - "
@@ -223,16 +219,14 @@ export_to_ris <- function(search_results, file_path) {
 #' @param search_results Data frame with search results
 #' @param file_path Output file path
 #' @return File path of created file
-#' @importFrom purrr map_chr
-#' @importFrom stringr str_remove_all str_remove
 #' @importFrom lubridate year
 export_to_bibtex <- function(search_results, file_path) {
   # Convert to BibTeX format
-  bibtex_content <- purrr::map_chr(seq_len(nrow(search_results)), function(i) {
+  bibtex_content <- sapply(seq_len(nrow(search_results)), function(i) {
     row <- search_results[i, ]
 
     # Create citation key
-    citation_key <- stringr::str_remove_all(row$id, "[^A-Za-z0-9]")
+    citation_key <- gsub("[^A-Za-z0-9]", "", row$id)
 
     # Build BibTeX entry
     entry_lines <- c(
@@ -261,7 +255,7 @@ export_to_bibtex <- function(search_results, file_path) {
     }
 
     # Remove trailing comma from last line and add closing brace
-    entry_lines[length(entry_lines)] <- stringr::str_remove(entry_lines[length(entry_lines)], ",$")
+    entry_lines[length(entry_lines)] <- gsub(",$", "", entry_lines[length(entry_lines)])
     entry_lines <- c(entry_lines, "}")
 
     paste(entry_lines, collapse = "\n")
@@ -278,12 +272,10 @@ export_to_bibtex <- function(search_results, file_path) {
 #' @param search_results Data frame with search results
 #' @param file_path Output file path
 #' @return File path of created file
-#' @importFrom purrr map_chr
-#' @importFrom stringr str_split str_trim
 #' @importFrom lubridate year
 export_to_endnote <- function(search_results, file_path) {
   # Convert to EndNote format
-  endnote_content <- purrr::map_chr(seq_len(nrow(search_results)), function(i) {
+  endnote_content <- sapply(seq_len(nrow(search_results)), function(i) {
     row <- search_results[i, ]
 
     entry_lines <- c(
@@ -308,8 +300,8 @@ export_to_endnote <- function(search_results, file_path) {
     }
 
     if ("authors" %in% names(row) && !is.na(row$authors)) {
-      authors <- stringr::str_split(row$authors, ";|,")[[1]]
-      for (author in stringr::str_trim(authors)) {
+      authors <- strsplit(row$authors, ";|,")[[1]]
+      for (author in trimws(authors)) {
         entry_lines <- c(entry_lines, paste0("%A ", author))
       }
     }
@@ -360,31 +352,31 @@ export_metrics <- function(metrics, file_path, format = "xlsx") {
 #' @param metrics List of calculated metrics
 #' @param file_path Output file path
 #' @return File path of created file
-#' @importFrom tibble tibble
-#' @importFrom dplyr bind_rows
-#' @importFrom readr write_csv
+#' @importFrom utils write.csv
 export_metrics_csv <- function(metrics, file_path) {
   # Flatten metrics into a data frame
-  metrics_df <- tibble::tibble(
+  metrics_df <- data.frame(
     metric_category = character(),
     metric_name = character(),
-    metric_value = character()
+    metric_value = character(),
+    stringsAsFactors = FALSE
   )
 
   for (category in names(metrics)) {
     category_metrics <- metrics[[category]]
     if (is.list(category_metrics)) {
       for (metric_name in names(category_metrics)) {
-        metrics_df <- dplyr::bind_rows(metrics_df, tibble::tibble(
+        metrics_df <- rbind(metrics_df, data.frame(
           metric_category = category,
           metric_name = metric_name,
-          metric_value = as.character(category_metrics[[metric_name]])
+          metric_value = as.character(category_metrics[[metric_name]]),
+          stringsAsFactors = FALSE
         ))
       }
     }
   }
 
-  readr::write_csv(metrics_df, file_path)
+  utils::write.csv(metrics_df, file_path, row.names = FALSE)
   return(file_path)
 }
 
@@ -394,8 +386,6 @@ export_metrics_csv <- function(metrics, file_path) {
 #' @param file_path Output file path
 #' @return File path of created file
 #' @importFrom openxlsx createWorkbook addWorksheet writeData createStyle addStyle saveWorkbook
-#' @importFrom purrr map_lgl map_chr map_dfr map_int
-#' @importFrom tibble tibble
 export_metrics_xlsx <- function(metrics, file_path) {
   wb <- openxlsx::createWorkbook()
 
@@ -416,25 +406,26 @@ export_metrics_xlsx <- function(metrics, file_path) {
       # FIXED: Always convert to simple data frame that Excel can handle
       category_df <- tryCatch({
         # Check if all elements are simple scalars
-        all_scalar <- all(purrr::map_lgl(category_metrics, function(x) {
+        all_scalar <- all(sapply(category_metrics, function(x) {
           length(x) == 1 && !is.list(x) && !is.data.frame(x)
         }))
 
         if (all_scalar) {
           # Simple metrics - convert directly
-          tibble::tibble(
+          data.frame(
             Metric = names(category_metrics),
-            Value = purrr::map_chr(category_metrics, function(x) {
+            Value = sapply(category_metrics, function(x) {
               if (is.numeric(x)) {
                 format(x, digits = 4)
               } else {
                 as.character(x)
               }
-            })
+            }),
+            stringsAsFactors = FALSE
           )
         } else {
           # Complex metrics - flatten to key-value pairs
-          result_rows <- purrr::map_dfr(names(category_metrics), function(metric_name) {
+          result_rows <- do.call(rbind, lapply(names(category_metrics), function(metric_name) {
             metric_value <- category_metrics[[metric_name]]
 
             if (is.list(metric_value) || length(metric_value) > 1) {
@@ -448,30 +439,32 @@ export_metrics_xlsx <- function(metrics, file_path) {
                 paste(metric_value, collapse = ", ")
               }
 
-              tibble::tibble(
+              data.frame(
                 Metric = metric_name,
-                Value = value_str
+                Value = value_str,
+                stringsAsFactors = FALSE
               )
             } else {
               # Simple scalar value
-              tibble::tibble(
+              data.frame(
                 Metric = metric_name,
                 Value = if (is.numeric(metric_value)) {
                   format(metric_value, digits = 4)
                 } else {
                   as.character(metric_value)
-                }
+                },
+                stringsAsFactors = FALSE
               )
             }
-          })
+          }))
 
           result_rows
         }
       }, error = function(e) {
         # Fallback: Just list metric names and note they're complex
-        tibble::tibble(
+        data.frame(
           Metric = names(category_metrics),
-          Value = purrr::map_chr(category_metrics, function(x) {
+          Value = sapply(category_metrics, function(x) {
             if (is.numeric(x) && length(x) == 1) {
               format(x, digits = 4)
             } else if (is.character(x) && length(x) == 1) {
@@ -479,7 +472,8 @@ export_metrics_xlsx <- function(metrics, file_path) {
             } else {
               paste("Complex data type:", class(x)[1])
             }
-          })
+          }),
+          stringsAsFactors = FALSE
         )
       })
 
@@ -491,9 +485,9 @@ export_metrics_xlsx <- function(metrics, file_path) {
 
   # Add summary sheet
   openxlsx::addWorksheet(wb, "Summary")
-  summary_df <- tibble::tibble(
+  summary_df <- data.frame(
     Category = names(metrics),
-    Description = purrr::map_chr(names(metrics), function(cat) {
+    Description = sapply(names(metrics), function(cat) {
       switch(cat,
              "basic" = "Basic search statistics",
              "precision_recall" = "Precision and recall metrics",
@@ -503,7 +497,8 @@ export_metrics_xlsx <- function(metrics, file_path) {
              "Other metrics"
       )
     }),
-    Metrics_Count = purrr::map_int(metrics, length)
+    Metrics_Count = sapply(metrics, length),
+    stringsAsFactors = FALSE
   )
   openxlsx::writeData(wb, "Summary", summary_df)
   openxlsx::addStyle(wb, "Summary", header_style, rows = 1, cols = 1:3)
@@ -517,8 +512,6 @@ export_metrics_xlsx <- function(metrics, file_path) {
 #' @param metrics List of calculated metrics
 #' @param file_path Output file path
 #' @return File path of created file
-#' @importFrom jsonlite write_json
-#' @importFrom utils packageVersion
 export_metrics_json <- function(metrics, file_path) {
   # FIXED: Convert packageVersion to character before serialization
   export_data <- list(
@@ -539,7 +532,19 @@ export_metrics_json <- function(metrics, file_path) {
     }
   }, how = "replace")
 
-  jsonlite::write_json(export_data, file_path, pretty = TRUE, auto_unbox = TRUE)
+  if (requireNamespace("jsonlite", quietly = TRUE)) {
+    jsonlite::write_json(export_data, file_path, pretty = TRUE, auto_unbox = TRUE)
+  } else {
+    # Fallback to base R JSON creation (simple)
+    json_content <- paste0('{\n',
+                           '  "export_timestamp": "', export_data$export_timestamp, '",\n',
+                           '  "package_version": "', export_data$package_version, '",\n',
+                           '  "r_version": "', export_data$r_version, '",\n',
+                           '  "metrics": "Use jsonlite package for full metrics export"\n',
+                           '}')
+    writeLines(json_content, file_path)
+  }
+
   return(file_path)
 }
 
@@ -570,7 +575,7 @@ create_data_package <- function(search_results, analysis_results = NULL,
   # Export search results in multiple formats - use fixed functions
   base_path <- file.path(data_dir, "search_results")
   export_results(search_results, base_path,
-                        formats = c("csv", "xlsx", "ris", "bibtex"))
+                 formats = c("csv", "xlsx", "ris", "bibtex"))
 
   # Export analysis results if provided - use fixed functions
   if (!is.null(analysis_results)) {
@@ -604,7 +609,6 @@ create_data_package <- function(search_results, analysis_results = NULL,
 #' @param package_dir Package directory
 #' @param search_results Search results data
 #' @param analysis_results Analysis results
-#' @importFrom utils packageVersion
 create_package_readme <- function(package_dir, search_results, analysis_results) {
   # FIXED: Build README content without problematic glue templates
   readme_lines <- c(
@@ -666,7 +670,7 @@ create_package_readme <- function(package_dir, search_results, analysis_results)
                     "### Loading Data in R",
                     "```r",
                     "# Load search results",
-                    "search_results <- readr::read_csv(\"data/search_results.csv\")",
+                    "search_results <- read.csv(\"data/search_results.csv\")",
                     ""
   )
 
@@ -726,50 +730,54 @@ create_package_readme <- function(package_dir, search_results, analysis_results)
 #'
 #' @param file_path Output file path
 #' @param search_results Search results data
-#' @importFrom tibble tribble
-#' @importFrom dplyr filter left_join
-#' @importFrom purrr map_dfr
-#' @importFrom readr write_csv
+#' @importFrom utils write.csv head
 create_data_dictionary <- function(file_path, search_results) {
   # Define column descriptions
-  column_descriptions <- tibble::tribble(
-    ~column, ~description, ~type, ~required,
-    "id", "Unique identifier for each record", "character", TRUE,
-    "title", "Article title", "character", TRUE,
-    "abstract", "Article abstract", "character", FALSE,
-    "source", "Publication source (journal, database)", "character", FALSE,
-    "date", "Publication date", "date", FALSE,
-    "doi", "Digital Object Identifier", "character", FALSE,
-    "authors", "Author names", "character", FALSE,
-    "duplicate", "Flag indicating duplicate records", "logical", FALSE,
-    "duplicate_group", "Group ID for duplicate records", "integer", FALSE,
-    "search_source", "Database or source of search", "character", FALSE,
-    "mesh_terms", "MeSH terms (PubMed)", "character", FALSE,
-    "emtree_terms", "Emtree terms (Embase)", "character", FALSE,
-    "keywords", "Author keywords", "character", FALSE
+  column_descriptions <- data.frame(
+    column = c("id", "title", "abstract", "source", "date", "doi", "authors",
+               "duplicate", "duplicate_group", "search_source", "mesh_terms",
+               "emtree_terms", "keywords"),
+    description = c("Unique identifier for each record",
+                    "Article title",
+                    "Article abstract",
+                    "Publication source (journal, database)",
+                    "Publication date",
+                    "Digital Object Identifier",
+                    "Author names",
+                    "Flag indicating duplicate records",
+                    "Group ID for duplicate records",
+                    "Database or source of search",
+                    "MeSH terms (PubMed)",
+                    "Emtree terms (Embase)",
+                    "Author keywords"),
+    type = c("character", "character", "character", "character", "date",
+             "character", "character", "logical", "integer", "character",
+             "character", "character", "character"),
+    required = c(TRUE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE,
+                 FALSE, FALSE, FALSE, FALSE, FALSE),
+    stringsAsFactors = FALSE
   )
 
   # Filter to only columns present in data
-  present_columns <- column_descriptions %>%
-    dplyr::filter(.data$column %in% names(search_results))
+  present_columns <- column_descriptions[column_descriptions$column %in% names(search_results), ]
 
   # Add actual column information
-  actual_info <- purrr::map_dfr(present_columns$column, function(col) {
+  actual_info <- do.call(rbind, lapply(present_columns$column, function(col) {
     col_data <- search_results[[col]]
-    tibble::tibble(
+    data.frame(
       column = col,
       missing_count = sum(is.na(col_data)),
       missing_percent = round(sum(is.na(col_data)) / length(col_data) * 100, 2),
       unique_values = length(unique(col_data[!is.na(col_data)])),
-      sample_values = paste(utils::head(unique(col_data[!is.na(col_data)]), 3), collapse = "; ")
+      sample_values = paste(utils::head(unique(col_data[!is.na(col_data)]), 3), collapse = "; "),
+      stringsAsFactors = FALSE
     )
-  })
+  }))
 
   # Combine information
-  data_dictionary <- present_columns %>%
-    dplyr::left_join(actual_info, by = "column")
+  data_dictionary <- merge(present_columns, actual_info, by = "column")
 
-  readr::write_csv(data_dictionary, file_path)
+  utils::write.csv(data_dictionary, file_path, row.names = FALSE)
 }
 
 #' Create Analysis Template Script
@@ -781,10 +789,9 @@ create_analysis_template <- function(file_path) {
 # Generated by searchAnalyzeR package
 
 library(searchAnalyzeR)
-library(tidyverse)
 
 # Load the search results
-search_results <- readr::read_csv("../data/search_results.csv")
+search_results <- read.csv("../data/search_results.csv")
 
 # Basic summary
 cat("Dataset Summary:\\n")
@@ -837,15 +844,11 @@ cat("Uncomment and modify the sections above to perform full analysis.\\n")
 #' Create Package Manifest
 #'
 #' @param package_dir Package directory
-#' @importFrom purrr map_dfr
-#' @importFrom tibble tibble
-#' @importFrom digest digest
-#' @importFrom readr write_csv
-#' @importFrom utils packageVersion
+#' @importFrom utils write.csv packageVersion
 create_package_manifest <- function(package_dir) {
   files <- list.files(package_dir, recursive = TRUE, full.names = TRUE)
 
-  manifest <- purrr::map_dfr(files, function(file_path) {
+  manifest <- do.call(rbind, lapply(files, function(file_path) {
     file_info <- file.info(file_path)
 
     # FIXED: Use basename() instead of regex to avoid Windows path issues
@@ -858,28 +861,30 @@ create_package_manifest <- function(package_dir) {
       relative_path <- file.path(subdir, basename(file_path))
     }
 
-    tibble::tibble(
+    data.frame(
       file = relative_path,
       size_bytes = file_info$size,
       modified = file_info$mtime,
-      checksum = digest::digest(file_path, file = TRUE)
+      checksum = digest::digest(file_path, file = TRUE),
+      stringsAsFactors = FALSE
     )
-  })
+  }))
 
   # Add package metadata
-  package_info <- tibble::tibble(
+  package_info <- data.frame(
     attribute = c("created_date", "package_version", "r_version", "platform"),
     value = c(
       as.character(Sys.time()),
       as.character(utils::packageVersion("searchAnalyzeR")),  # FIXED: Convert to character
       as.character(R.version.string),
       as.character(Sys.info()["sysname"])
-    )
+    ),
+    stringsAsFactors = FALSE
   )
 
   # Write manifest
-  readr::write_csv(manifest, file.path(package_dir, "MANIFEST.csv"))
-  readr::write_csv(package_info, file.path(package_dir, "PACKAGE_INFO.csv"))
+  utils::write.csv(manifest, file.path(package_dir, "MANIFEST.csv"), row.names = FALSE)
+  utils::write.csv(package_info, file.path(package_dir, "PACKAGE_INFO.csv"), row.names = FALSE)
 }
 
 #' Export Validation Results
@@ -904,9 +909,6 @@ export_validation <- function(validation_results, file_path, format = "xlsx") {
 #' @param file_path Output file path
 #' @return File path of created file
 #' @importFrom openxlsx createWorkbook addWorksheet writeData createStyle addStyle saveWorkbook
-#' @importFrom purrr map_dfr map_chr
-#' @importFrom tibble tibble
-#' @importFrom stringr str_sub
 export_validation_xlsx <- function(validation_results, file_path) {
   wb <- openxlsx::createWorkbook()
 
@@ -924,16 +926,19 @@ export_validation_xlsx <- function(validation_results, file_path) {
     # Summary sheet
     openxlsx::addWorksheet(wb, "Summary")
 
-    summary_df <- purrr::map_dfr(validation_results, function(result) {
-      tibble::tibble(
+    summary_df <- do.call(rbind, lapply(names(validation_results), function(name) {
+      result <- validation_results[[name]]
+      data.frame(
+        benchmark = name,
         precision = result$precision,
         recall = result$recall,
         f1_score = result$f1_score,
         true_positives = result$true_positives,
         false_positives = result$false_positives,
-        false_negatives = result$false_negatives
+        false_negatives = result$false_negatives,
+        stringsAsFactors = FALSE
       )
-    }, .id = "benchmark")
+    }))
 
     openxlsx::writeData(wb, "Summary", summary_df)
     openxlsx::addStyle(wb, "Summary", header_style, rows = 1, cols = 1:ncol(summary_df))
@@ -941,16 +946,17 @@ export_validation_xlsx <- function(validation_results, file_path) {
     # Individual benchmark sheets
     for (benchmark_name in names(validation_results)) {
       if (nchar(benchmark_name) > 31) {
-        sheet_name <- stringr::str_sub(benchmark_name, 1, 31)  # Excel sheet name limit
+        sheet_name <- substr(benchmark_name, 1, 31)  # Excel sheet name limit
       } else {
         sheet_name <- benchmark_name
       }
 
       openxlsx::addWorksheet(wb, sheet_name)
 
-      result_df <- tibble::tibble(
+      result_df <- data.frame(
         Metric = names(validation_results[[benchmark_name]]),
-        Value = purrr::map_chr(validation_results[[benchmark_name]], as.character)
+        Value = sapply(validation_results[[benchmark_name]], as.character),
+        stringsAsFactors = FALSE
       )
 
       openxlsx::writeData(wb, sheet_name, result_df)
@@ -960,9 +966,10 @@ export_validation_xlsx <- function(validation_results, file_path) {
     # Single validation result
     openxlsx::addWorksheet(wb, "Validation Results")
 
-    result_df <- tibble::tibble(
+    result_df <- data.frame(
       Metric = names(validation_results),
-      Value = purrr::map_chr(validation_results, as.character)
+      Value = sapply(validation_results, as.character),
+      stringsAsFactors = FALSE
     )
 
     openxlsx::writeData(wb, "Validation Results", result_df)
@@ -978,25 +985,25 @@ export_validation_xlsx <- function(validation_results, file_path) {
 #' @param validation_results Validation results
 #' @param file_path Output file path
 #' @return File path of created file
-#' @importFrom purrr map_dfr map_chr
-#' @importFrom tibble tibble as_tibble
-#' @importFrom readr write_csv
+#' @importFrom utils write.csv
 export_validation_csv <- function(validation_results, file_path) {
   if (is.list(validation_results) &&
       !all(c("precision", "recall", "f1_score") %in% names(validation_results))) {
     # Multiple benchmarks
-    validation_df <- purrr::map_dfr(validation_results, function(result) {
-      tibble::as_tibble(result)
-    }, .id = "benchmark")
+    validation_df <- do.call(rbind, lapply(names(validation_results), function(name) {
+      result <- validation_results[[name]]
+      data.frame(benchmark = name, as.data.frame(result), stringsAsFactors = FALSE)
+    }))
   } else {
     # Single result
-    validation_df <- tibble::tibble(
+    validation_df <- data.frame(
       metric = names(validation_results),
-      value = purrr::map_chr(validation_results, as.character)
+      value = sapply(validation_results, as.character),
+      stringsAsFactors = FALSE
     )
   }
 
-  readr::write_csv(validation_df, file_path)
+  utils::write.csv(validation_df, file_path, row.names = FALSE)
   return(file_path)
 }
 
@@ -1005,8 +1012,6 @@ export_validation_csv <- function(validation_results, file_path) {
 #' @param validation_results Validation results
 #' @param file_path Output file path
 #' @return File path of created file
-#' @importFrom jsonlite write_json
-#' @importFrom utils packageVersion
 export_validation_json <- function(validation_results, file_path) {
   # FIXED: Convert packageVersion to character before serialization
   export_data <- list(
@@ -1027,6 +1032,18 @@ export_validation_json <- function(validation_results, file_path) {
     }
   }, how = "replace")
 
-  jsonlite::write_json(export_data, file_path, pretty = TRUE, auto_unbox = TRUE)
+  if (requireNamespace("jsonlite", quietly = TRUE)) {
+    jsonlite::write_json(export_data, file_path, pretty = TRUE, auto_unbox = TRUE)
+  } else {
+    # Fallback to base R JSON creation (simple)
+    json_content <- paste0('{\n',
+                           '  "export_timestamp": "', export_data$export_timestamp, '",\n',
+                           '  "package_version": "', export_data$package_version, '",\n',
+                           '  "r_version": "', export_data$r_version, '",\n',
+                           '  "validation_results": "Use jsonlite package for full results export"\n',
+                           '}')
+    writeLines(json_content, file_path)
+  }
+
   return(file_path)
 }

@@ -28,10 +28,9 @@ Searches PubMed using the provided search terms and retrieves article metadata
 in a format compatible with searchAnalyzeR analysis functions.
 }
 \details{
-This function connects to PubMed using the rentrez package, executes a search query,
-and retrieves detailed article information including title, abstract, journal,
-publication date, and authors. Results are returned as a standardized data frame
-ready for use with SearchAnalyzer.
+This function connects to PubMed using the rentrez package (if available) or
+provides simulated data if the package is not installed. Results are returned
+as a standardized data frame ready for use with SearchAnalyzer.
 }
 \examples{
 \donttest{

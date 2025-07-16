@@ -13,6 +13,22 @@ calc_efficiency(search_time, results_count, relevant_count)
 
 \item{relevant_count}{Number of relevant results}
 }
+\value{
+List containing efficiency metrics
+}
 \description{
 Calculate Search Efficiency Metrics
+}
+\details{
+Calculates various efficiency metrics for search performance:
+\itemize{
+\item \strong{time_per_result}: Average time to retrieve each result
+\item \strong{time_per_relevant}: Average time to retrieve each relevant result
+\item \strong{relevant_ratio}: Proportion of results that are relevant
+\item \strong{efficiency_score}: Overall efficiency combining time and relevance
+}
+}
+\examples{
+efficiency <- calc_efficiency(search_time = 30, results_count = 100, relevant_count = 15)
+print(paste("Efficiency score:", round(efficiency$efficiency_score, 4)))
 }

@@ -4,7 +4,9 @@
 \alias{get_pkg_versions}
 \title{Extract Package Version Information}
 \usage{
-get_pkg_versions(packages = c("searchAnalyzeR", "dplyr", "ggplot2", "stringr"))
+get_pkg_versions(
+  packages = c("searchAnalyzeR", "ggplot2", "lubridate", "openxlsx")
+)
 }
 \arguments{
 \item{packages}{Character vector of package names}

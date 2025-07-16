@@ -33,20 +33,12 @@ Depends:
     R (>= 4.1.0)
 Imports:
     R6 (>= 2.5.0),
-    dplyr (>= 1.1.0),
     ggplot2 (>= 3.4.0),
-    purrr (>= 1.0.0),
-    stringr (>= 1.5.0),
-    tidyr (>= 1.3.0),
-    readr (>= 2.1.0),
-    tibble (>= 3.2.0),
-    lubridate (>= 1.9.0),
-    digest (>= 0.6.31),
-    jsonlite (>= 1.8.0),
     openxlsx (>= 4.2.5),
     stringdist (>= 0.9.10),
-    rentrez (>= 1.2.3),
-    xml2 (>= 1.3.0),
+    lubridate (>= 1.9.0),
+    digest (>= 0.6.31),
+    dplyr (>= 1.1.0),
     stats,
     utils
 Suggests:
@@ -63,11 +55,17 @@ Suggests:
     rmarkdown (>= 2.20),
     knitr (>= 1.42),
     glue (>= 1.6.0),
-    patchwork (>= 1.1.0),
+    rentrez (>= 1.2.3),
+    xml2 (>= 1.3.0),
+    readr (>= 2.1.0),
+    jsonlite (>= 1.8.0),
     revtools,
+    tidyr,
+    patchwork,
     litsearchr,
     metagear
 Config/testthat/edition: 3
+VignetteBuilder: knitr
 Keywords: systematic-review, evidence-synthesis, information-retrieval, 
     reproducible-research, PRISMA, meta-analysis, search-validation, 
     performance-metrics, bibliometrics, pubmed-search, strategy-comparison,

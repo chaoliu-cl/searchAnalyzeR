@@ -11,6 +11,29 @@ calc_coverage(results_by_database, gold_standard)
 
 \item{gold_standard}{Vector of relevant article IDs}
 }
+\value{
+List containing coverage statistics
+}
 \description{
 Calculate Coverage Metrics Across Databases
+}
+\details{
+Calculates coverage metrics for each database and overall:
+\itemize{
+\item \strong{coverage_count}: Number of relevant articles found by each database
+\item \strong{coverage_rate}: Proportion of relevant articles found by each database
+\item \strong{unique_coverage}: Number of relevant articles found only by this database
+\item \strong{total_coverage}: Overall proportion of relevant articles found by all databases
+\item \strong{redundancy_rate}: Proportion of duplicate results across databases
+}
+}
+\examples{
+# Create sample data
+results_db1 <- c("art1", "art2", "art3", "art4")
+results_db2 <- c("art2", "art3", "art5", "art6")
+results_by_db <- list("Database1" = results_db1, "Database2" = results_db2)
+gold_standard <- c("art1", "art3", "art5", "art7", "art8")
+
+coverage <- calc_coverage(results_by_db, gold_standard)
+print(coverage$total_coverage)
 }

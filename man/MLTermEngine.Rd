@@ -48,8 +48,11 @@ print(suggestions)
 # Evaluate suggestions with validation corpus
 corpus <- data.frame(
   id = paste0("art", 1:100),
-  title = paste("Research on", sample(c("diabetes", "diabetic", "glycemic"), 100, replace = TRUE)),
-  abstract = paste("Study about", sample(c("treatment", "therapy", "intervention"), 100, replace = TRUE)),
+  title = paste("Research on",
+                sample(c("diabetes", "diabetic", "glycemic"), 100, replace = TRUE)),
+  abstract = paste("Study about",
+                   sample(c("treatment", "therapy", "intervention"),
+                          100, replace = TRUE)),
   stringsAsFactors = FALSE
 )
 

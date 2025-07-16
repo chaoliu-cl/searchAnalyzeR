@@ -140,6 +140,7 @@ Validate search strategy against benchmarks
 }
 \subsection{Returns}{
 Validation results
+Validate against single benchmark (PUBLIC METHOD)
 }
 }
 \if{html}{\out{<hr>}}
@@ -181,6 +182,7 @@ Cross-domain validation
 }
 \subsection{Returns}{
 Cross-domain validation results
+Sensitivity analysis for search parameters
 }
 }
 \if{html}{\out{<hr>}}

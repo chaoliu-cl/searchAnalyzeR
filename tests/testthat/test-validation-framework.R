@@ -5,10 +5,6 @@
 
 library(testthat)
 library(dplyr)
-library(purrr)
-library(stringr)
-library(tibble)
-library(tidyr)
 library(R6)
 
 # Helper function for adding class
@@ -19,11 +15,10 @@ add_class <- function(x, new_class) {
 
 # Test data setup
 setup_test_data <- function() {
-  # Mock benchmark datasets
   mock_benchmarks <- list(
     medical_cardiology = list(
       relevant_ids = c("med1", "med2", "med3", "med4", "med5"),
-      corpus = tibble(
+      corpus = data.frame(
         id = paste0("med", 1:20),
         title = c(
           paste("Systematic review of cardiac", 1:5),
@@ -36,12 +31,13 @@ setup_test_data <- function() {
           paste("Meta-analysis of heart disease interventions", 6:10),
           paste("Cancer treatment protocols and outcomes", 11:15),
           paste("Various medical research topics", 16:20)
-        )
+        ),
+        stringsAsFactors = FALSE
       )
     ),
     environmental_climate = list(
       relevant_ids = c("env1", "env2", "env3"),
-      corpus = tibble(
+      corpus = data.frame(
         id = paste0("env", 1:15),
         title = c(
           paste("Climate change impact", 1:3),
@@ -54,12 +50,13 @@ setup_test_data <- function() {
           paste("Systematic review of environmental factors", 4:6),
           paste("Meta-analysis of biodiversity loss", 7:9),
           paste("Geological formations and processes", 10:15)
-        )
+        ),
+        stringsAsFactors = FALSE
       )
     ),
     social_science_education = list(
       relevant_ids = c("soc1", "soc2"),
-      corpus = tibble(
+      corpus = data.frame(
         id = paste0("soc", 1:10),
         title = c(
           paste("Educational systematic review", 1:2),
@@ -70,12 +67,12 @@ setup_test_data <- function() {
           paste("Systematic review of educational interventions", 1:2),
           paste("Meta-analysis of learning outcomes", 3:4),
           paste("Psychology research on behavior", 5:10)
-        )
+        ),
+        stringsAsFactors = FALSE
       )
     )
   )
 
-  # Mock search strategies
   strategies <- list(
     basic_strategy = list(
       terms = c("systematic review", "meta-analysis"),
@@ -122,50 +119,56 @@ create_mock_validator <- function(mock_benchmarks) {
 
       # Override the cross_domain_validation method to work with our test data
       cross_domain_validation = function(search_strategy) {
-        # Only use domains that exist in our test data
         available_domains <- c("medical", "environmental", "social_science")
-        existing_domains <- available_domains[map_lgl(available_domains, function(domain) {
-          any(str_detect(names(self$benchmarks), domain))
+
+        # Use base R instead of purrr::map_lgl
+        existing_domains <- available_domains[sapply(available_domains, function(domain) {
+          any(grepl(domain, names(self$benchmarks)))
         })]
 
-        results <- map_dfr(existing_domains, function(domain) {
-          domain_benchmarks <- self$benchmarks[str_detect(names(self$benchmarks), domain)]
+        # Use base R instead of purrr::map_dfr
+        results <- do.call(rbind, lapply(existing_domains, function(domain) {
+          domain_benchmarks <- self$benchmarks[grepl(domain, names(self$benchmarks))]
 
           if (length(domain_benchmarks) == 0) {
-            return(tibble(
+            return(data.frame(
               domain = domain,
               mean_precision = NA_real_,
               mean_recall = NA_real_,
               mean_f1 = NA_real_,
               sd_precision = NA_real_,
               sd_recall = NA_real_,
-              n_benchmarks = 0
+              n_benchmarks = 0,
+              stringsAsFactors = FALSE
             ))
           }
 
-          domain_results <- map_dfr(domain_benchmarks, function(benchmark) {
+          # Use base R instead of purrr::map_dfr
+          domain_results <- do.call(rbind, lapply(domain_benchmarks, function(benchmark) {
             validation <- private$execute_validation(search_strategy, benchmark)
-            tibble(
+            data.frame(
               precision = validation$precision,
               recall = validation$recall,
-              f1_score = validation$f1_score
+              f1_score = validation$f1_score,
+              stringsAsFactors = FALSE
             )
-          }, .id = "benchmark")
+          }))
 
           if (nrow(domain_results) == 0) {
-            return(tibble(
+            return(data.frame(
               domain = domain,
               mean_precision = NA_real_,
               mean_recall = NA_real_,
               mean_f1 = NA_real_,
               sd_precision = NA_real_,
               sd_recall = NA_real_,
-              n_benchmarks = 0
+              n_benchmarks = 0,
+              stringsAsFactors = FALSE
             ))
           }
 
           domain_results %>%
-            summarise(
+            dplyr::summarise(
               mean_precision = mean(precision, na.rm = TRUE),
               mean_recall = mean(recall, na.rm = TRUE),
               mean_f1 = mean(f1_score, na.rm = TRUE),
@@ -174,8 +177,8 @@ create_mock_validator <- function(mock_benchmarks) {
               n_benchmarks = n(),
               .groups = "drop"
             ) %>%
-            mutate(domain = domain)
-        })
+            dplyr::mutate(domain = domain)
+        }))
 
         return(results)
       }
@@ -187,6 +190,16 @@ create_mock_validator <- function(mock_benchmarks) {
       },
 
       execute_validation = function(strategy, benchmark) {
+        # Check if benchmark has the required structure
+        if (!is.list(benchmark) || !all(c("relevant_ids", "corpus") %in% names(benchmark))) {
+          stop("Benchmark must have 'relevant_ids' and 'corpus' fields")
+        }
+
+        # Check if corpus is a data frame with required columns
+        if (!is.data.frame(benchmark$corpus) || !all(c("id", "title", "abstract") %in% names(benchmark$corpus))) {
+          stop("Benchmark corpus must be a data frame with 'id', 'title', and 'abstract' columns")
+        }
+
         retrieved_ids <- private$simulate_search(strategy, benchmark$corpus)
 
         calc_precision_recall(
@@ -199,35 +212,23 @@ create_mock_validator <- function(mock_benchmarks) {
       simulate_search = function(strategy, corpus) {
         search_terms <- strategy$terms
 
-        # Handle empty search terms
         if (length(search_terms) == 0 || all(search_terms == "")) {
           return(character(0))
         }
 
-        # Filter out empty terms
         search_terms <- search_terms[search_terms != ""]
 
         if (length(search_terms) == 0) {
           return(character(0))
         }
 
-        # Filter out empty terms
-        search_terms <- search_terms[search_terms != ""]
-
-        if (length(search_terms) == 0) {
-          return(character(0))
-        }
-
-        # FIXED: Use base R functions instead of stringr
-        # Text matching simulation with fallback to base R
-        if (requireNamespace("dplyr", quietly = TRUE) && requireNamespace("stringr", quietly = TRUE)) {
-          # Use tidyverse if available
-          matches <- corpus %>%
-            dplyr::filter(stringr::str_detect(tolower(paste(.data$title, .data$abstract)),
-                                              paste(tolower(search_terms), collapse = "|"))) %>%
-            dplyr::pull(.data$id)
+        # Use base R instead of stringr
+        if (requireNamespace("dplyr", quietly = TRUE)) {
+          searchable_text <- tolower(paste(corpus$title, corpus$abstract))
+          pattern <- paste(tolower(search_terms), collapse = "|")
+          match_indices <- grep(pattern, searchable_text)
+          matches <- corpus$id[match_indices]
         } else {
-          # FIXED: Fallback to base R - this is the key fix
           searchable_text <- tolower(paste(corpus$title, corpus$abstract))
           pattern <- paste(tolower(search_terms), collapse = "|")
           match_indices <- grep(pattern, searchable_text)
@@ -381,18 +382,15 @@ test_that("cross_domain_validation works correctly", {
   expect_true("domain" %in% names(results))
   expect_true(all(c("mean_precision", "mean_recall", "mean_f1", "n_benchmarks") %in% names(results)))
 
-  # Check that all metrics are between 0 and 1 (excluding NA values)
   expect_true(all(results$mean_precision >= 0 & results$mean_precision <= 1, na.rm = TRUE))
   expect_true(all(results$mean_recall >= 0 & results$mean_recall <= 1, na.rm = TRUE))
   expect_true(all(results$mean_f1 >= 0 & results$mean_f1 <= 1, na.rm = TRUE))
 
-  # Check that standard deviations are non-negative (excluding NA values)
   expect_true(all(results$sd_precision >= 0, na.rm = TRUE))
   expect_true(all(results$sd_recall >= 0, na.rm = TRUE))
 
-  # Should have results for domains that exist in our test data
   expect_gt(nrow(results), 0)
-  expect_lte(nrow(results), 3)  # At most 3 domains in our test data
+  expect_lte(nrow(results), 3)
 })
 
 test_that("cross_domain_validation handles domains correctly", {
@@ -456,6 +454,12 @@ test_that("sensitivity_analysis handles empty parameter ranges", {
 
   expect_s3_class(results, "data.frame")
   expect_equal(nrow(results), 0)  # No parameter combinations = no rows
+
+  # Check that it has the sensitivity_analysis class
+  expect_true("sensitivity_analysis" %in% class(results))
+
+  # Should have the expected base structure even when empty
+  expect_true(is.data.frame(results))
 })
 
 test_that("sensitivity_analysis handles single parameter", {
@@ -593,14 +597,15 @@ test_that("validator performs reasonably with larger datasets", {
 
   data <- setup_test_data()
 
-  # Create larger mock datasets
+  # Create larger mock datasets - use data.frame instead of tibble
   large_benchmarks <- data$mock_benchmarks
   large_benchmarks$large_medical <- list(
     relevant_ids = paste0("large", 1:100),
-    corpus = tibble(
+    corpus = data.frame(
       id = paste0("large", 1:1000),
       title = paste("Large dataset article", 1:1000),
-      abstract = paste("Abstract for large dataset", 1:1000)
+      abstract = paste("Abstract for large dataset", 1:1000),
+      stringsAsFactors = FALSE
     )
   )
 
@@ -648,15 +653,33 @@ test_that("validator handles errors gracefully", {
     expect_true(TRUE)  # Error is acceptable
   })
 
-  # Test with malformed benchmarks
+  # Test with malformed benchmarks that should actually cause errors
   malformed_benchmarks <- list(
-    bad_benchmark = list(wrong_field = "value")
+    bad_benchmark = list(wrong_field = "value")  # Missing required 'relevant_ids' and 'corpus'
   )
 
   MockValidator2 <- create_mock_validator(malformed_benchmarks)
   validator2 <- MockValidator2$new(malformed_benchmarks)
 
+  # This should now properly throw an error due to missing required fields
   expect_error(
-    validator2$validate_strategy(data$strategies$basic_strategy, "bad_benchmark")
+    validator2$validate_strategy(data$strategies$basic_strategy, "bad_benchmark"),
+    "Benchmark must have 'relevant_ids' and 'corpus' fields"
+  )
+
+  # Test with benchmark that has corpus but wrong structure
+  malformed_benchmarks2 <- list(
+    bad_corpus_benchmark = list(
+      relevant_ids = c("id1", "id2"),
+      corpus = data.frame(wrong_column = c("value1", "value2"))  # Missing required columns
+    )
+  )
+
+  MockValidator3 <- create_mock_validator(malformed_benchmarks2)
+  validator3 <- MockValidator3$new(malformed_benchmarks2)
+
+  expect_error(
+    validator3$validate_strategy(data$strategies$basic_strategy, "bad_corpus_benchmark"),
+    "Benchmark corpus must be a data frame with 'id', 'title', and 'abstract' columns"
   )
 })

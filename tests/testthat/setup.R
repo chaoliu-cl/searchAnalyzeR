@@ -5,9 +5,6 @@
 library(testthat)
 library(dplyr)
 library(ggplot2)
-library(stringr)
-library(purrr)
-library(tidyr)
 library(lubridate)
 
 # Suppress warnings during testing
@@ -18,8 +15,14 @@ options(stringsAsFactors = FALSE)
 set.seed(42)  # For reproducible random data in tests
 
 # Handle function conflicts
-# Store purrr's is_empty in case it conflicts with searchAnalyzeR
-purrr_is_empty <- purrr::is_empty
+# Store base R is_empty function (avoid purrr dependency)
+base_is_empty <- function(x) {
+  if (is.null(x)) return(TRUE)
+  if (length(x) == 0) return(TRUE)
+  if (is.data.frame(x) && nrow(x) == 0) return(TRUE)
+  if (is.character(x) && all(is.na(x))) return(TRUE)
+  return(FALSE)
+}
 
 # Create test-specific temporary directory
 test_temp_dir <- file.path(tempdir(), "searchanalyzer_tests")

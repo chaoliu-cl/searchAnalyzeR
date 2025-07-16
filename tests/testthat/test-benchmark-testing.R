@@ -16,9 +16,9 @@ create_strategy_test_data <- function() {
 
 # Mock bootstrap_compare function (shortened from bootstrap_strategy_comparison)
 bootstrap_compare <- function(strategy1_results, strategy2_results, gold_standard, n_bootstrap = 1000) {
-  bootstrap_results <- purrr::map_dfr(1:n_bootstrap, function(i) {
+  bootstrap_results <- do.call(rbind, lapply(1:n_bootstrap, function(i) {
     # Bootstrap sample of gold standard
-    sample_size <- min(length(gold_standard), 50)  # Limit sample size for efficiency
+    sample_size <- min(length(gold_standard), 50)
     sample_indices <- sample(length(gold_standard), sample_size, replace = TRUE)
     bootstrap_gold <- gold_standard[sample_indices]
 
@@ -26,16 +26,17 @@ bootstrap_compare <- function(strategy1_results, strategy2_results, gold_standar
     metrics1 <- calc_precision_recall(strategy1_results, bootstrap_gold)
     metrics2 <- calc_precision_recall(strategy2_results, bootstrap_gold)
 
-    tibble::tibble(
+    data.frame(
       iteration = i,
       strategy1_precision = metrics1$precision,
       strategy1_recall = metrics1$recall,
       strategy1_f1 = metrics1$f1_score,
       strategy2_precision = metrics2$precision,
       strategy2_recall = metrics2$recall,
-      strategy2_f1 = metrics2$f1_score
+      strategy2_f1 = metrics2$f1_score,
+      stringsAsFactors = FALSE
     )
-  })
+  }))
 
   return(bootstrap_results)
 }
@@ -44,7 +45,6 @@ bootstrap_compare <- function(strategy1_results, strategy2_results, gold_standar
 cv_strategy <- function(search_strategy, validation_corpus, gold_standard, k_folds = 5, stratified = TRUE) {
   # Create folds
   if (stratified) {
-    # Stratify by relevance
     relevant_indices <- which(validation_corpus$id %in% gold_standard)
     non_relevant_indices <- which(!validation_corpus$id %in% gold_standard)
 
@@ -53,29 +53,28 @@ cv_strategy <- function(search_strategy, validation_corpus, gold_standard, k_fol
     non_relevant_folds <- split(sample(non_relevant_indices),
                                 rep(1:k_folds, length.out = length(non_relevant_indices)))
 
-    folds <- purrr::map2(relevant_folds, non_relevant_folds, c)
+    folds <- lapply(1:k_folds, function(i) {
+      c(relevant_folds[[i]], non_relevant_folds[[i]])
+    })
   } else {
     all_indices <- sample(seq_len(nrow(validation_corpus)))
     folds <- split(all_indices, rep(1:k_folds, length.out = length(all_indices)))
   }
 
   # Perform cross-validation
-  cv_results <- purrr::map_dfr(1:k_folds, function(fold_idx) {
+  cv_results <- do.call(rbind, lapply(1:k_folds, function(fold_idx) {
     test_indices <- folds[[fold_idx]]
     train_indices <- setdiff(seq_len(nrow(validation_corpus)), test_indices)
 
-    # Use training set to optimize strategy (if applicable)
     train_corpus <- validation_corpus[train_indices, ]
     test_corpus <- validation_corpus[test_indices, ]
 
-    # Apply search strategy to test set
     test_results <- simulate_search(search_strategy, test_corpus)
     test_gold_standard <- intersect(gold_standard, test_corpus$id)
 
-    # Calculate metrics
     metrics <- calc_precision_recall(test_results, test_gold_standard)
 
-    tibble::tibble(
+    data.frame(
       fold = fold_idx,
       precision = metrics$precision,
       recall = metrics$recall,
@@ -84,11 +83,12 @@ cv_strategy <- function(search_strategy, validation_corpus, gold_standard, k_fol
       false_positives = metrics$false_positives,
       false_negatives = metrics$false_negatives,
       test_size = nrow(test_corpus),
-      relevant_in_test = length(test_gold_standard)
+      relevant_in_test = length(test_gold_standard),
+      stringsAsFactors = FALSE
     )
-  })
+  }))
 
-  # Calculate summary statistics
+  # Calculate summary statistics using dplyr (which is declared)
   summary_stats <- cv_results %>%
     dplyr::summarise(
       mean_precision = mean(.data$precision, na.rm = TRUE),
@@ -97,7 +97,7 @@ cv_strategy <- function(search_strategy, validation_corpus, gold_standard, k_fol
       sd_recall = stats::sd(.data$recall, na.rm = TRUE),
       mean_f1 = mean(.data$f1_score, na.rm = TRUE),
       sd_f1 = stats::sd(.data$f1_score, na.rm = TRUE),
-      cv_precision = .data$sd_precision / .data$mean_precision,  # Coefficient of variation
+      cv_precision = .data$sd_precision / .data$mean_precision,
       cv_recall = .data$sd_recall / .data$mean_recall,
       cv_f1 = .data$sd_f1 / .data$mean_f1,
       .groups = "drop"
@@ -118,36 +118,32 @@ cv_strategy <- function(search_strategy, validation_corpus, gold_standard, k_fol
 
 # Mock run_benchmarks function (shortened from run_benchmark_suite)
 run_benchmarks <- function(search_strategies, benchmark_datasets, metrics_to_calculate = c("precision", "recall", "f1", "efficiency")) {
-  # Initialize progress tracking
   total_combinations <- length(search_strategies) * length(benchmark_datasets)
   current_combination <- 0
 
-  # Run all strategy-benchmark combinations
-  results <- purrr::map_dfr(names(search_strategies), function(strategy_name) {
+  results <- do.call(rbind, lapply(names(search_strategies), function(strategy_name) {
     strategy <- search_strategies[[strategy_name]]
 
-    purrr::map_dfr(names(benchmark_datasets), function(benchmark_name) {
+    do.call(rbind, lapply(names(benchmark_datasets), function(benchmark_name) {
       current_combination <<- current_combination + 1
       cat("Running benchmark", current_combination, "of", total_combinations,
           ":", strategy_name, "on", benchmark_name, "\n")
 
       benchmark <- benchmark_datasets[[benchmark_name]]
 
-      # Execute search strategy on benchmark
       start_time <- Sys.time()
       retrieved_ids <- simulate_search(strategy, benchmark$corpus)
       execution_time <- as.numeric(Sys.time() - start_time, units = "secs")
 
-      # Calculate requested metrics
       basic_metrics <- calc_precision_recall(retrieved_ids, benchmark$relevant_ids)
 
-      result_row <- tibble::tibble(
+      result_row <- data.frame(
         strategy_name = strategy_name,
         benchmark_name = benchmark_name,
-        execution_time = execution_time
+        execution_time = execution_time,
+        stringsAsFactors = FALSE
       )
 
-      # Add basic metrics
       if ("precision" %in% metrics_to_calculate) {
         result_row$precision <- basic_metrics$precision
       }
@@ -158,7 +154,6 @@ run_benchmarks <- function(search_strategies, benchmark_datasets, metrics_to_cal
         result_row$f1_score <- basic_metrics$f1_score
       }
 
-      # Add efficiency metrics
       if ("efficiency" %in% metrics_to_calculate) {
         efficiency_metrics <- calc_efficiency(
           execution_time, length(retrieved_ids), basic_metrics$true_positives
@@ -168,7 +163,6 @@ run_benchmarks <- function(search_strategies, benchmark_datasets, metrics_to_cal
         result_row$efficiency_score <- efficiency_metrics$efficiency_score
       }
 
-      # Add additional metrics
       result_row$true_positives <- basic_metrics$true_positives
       result_row$false_positives <- basic_metrics$false_positives
       result_row$false_negatives <- basic_metrics$false_negatives
@@ -176,10 +170,10 @@ run_benchmarks <- function(search_strategies, benchmark_datasets, metrics_to_cal
       result_row$total_relevant <- length(benchmark$relevant_ids)
 
       return(result_row)
-    })
-  })
+    }))
+  }))
 
-  # Calculate rankings and relative performance
+  # Use dplyr which is declared
   results <- results %>%
     dplyr::group_by(.data$benchmark_name) %>%
     dplyr::mutate(
@@ -189,7 +183,6 @@ run_benchmarks <- function(search_strategies, benchmark_datasets, metrics_to_cal
     ) %>%
     dplyr::ungroup()
 
-  # Create summary statistics
   summary_stats <- results %>%
     dplyr::group_by(.data$strategy_name) %>%
     dplyr::summarise(
@@ -203,18 +196,21 @@ run_benchmarks <- function(search_strategies, benchmark_datasets, metrics_to_cal
       total_execution_time = sum(.data$execution_time, na.rm = TRUE),
       .groups = "drop"
     ) %>%
-    dplyr::arrange(.data$mean_f1_rank)  # Best strategies first
+    dplyr::arrange(.data$mean_f1_rank)
 
   benchmark_suite_results <- list(
     detailed_results = results,
     summary = summary_stats,
-    benchmark_info = purrr::map_dfr(benchmark_datasets, function(bm) {
-      tibble::tibble(
+    benchmark_info = do.call(rbind, lapply(names(benchmark_datasets), function(name) {
+      bm <- benchmark_datasets[[name]]
+      data.frame(
+        benchmark_name = name,
         corpus_size = nrow(bm$corpus),
         relevant_count = length(bm$relevant_ids),
-        relevance_rate = length(bm$relevant_ids) / nrow(bm$corpus)
+        relevance_rate = length(bm$relevant_ids) / nrow(bm$corpus),
+        stringsAsFactors = FALSE
       )
-    }, .id = "benchmark_name"),
+    })),
     execution_timestamp = Sys.time()
   )
 
@@ -224,50 +220,50 @@ run_benchmarks <- function(search_strategies, benchmark_datasets, metrics_to_cal
 
 # Mock meta_analyze function (shortened from meta_analyze_benchmarks)
 meta_analyze <- function(benchmark_results, strategy_name, metric = "f1_score") {
-  # Extract relevant data from benchmark results
-  meta_data <- purrr::map_dfr(benchmark_results, function(result) {
+  meta_data <- do.call(rbind, lapply(names(benchmark_results), function(study_name) {
+    result <- benchmark_results[[study_name]]
     if (strategy_name %in% result$detailed_results$strategy_name) {
       strategy_data <- result$detailed_results %>%
         dplyr::filter(.data$strategy_name == !!strategy_name)
 
-      tibble::tibble(
+      data.frame(
+        study = study_name,
         benchmark = unique(strategy_data$benchmark_name),
         metric_value = strategy_data[[metric]],
         n_relevant = strategy_data$total_relevant,
-        n_retrieved = strategy_data$total_retrieved
+        n_retrieved = strategy_data$total_retrieved,
+        stringsAsFactors = FALSE
       )
+    } else {
+      NULL
     }
-  }, .id = "study")
+  }))
 
-  if (nrow(meta_data) == 0) {
+  if (is.null(meta_data) || nrow(meta_data) == 0) {
     stop("No data found for strategy: ", strategy_name)
   }
 
-  # Calculate weights (inverse variance weighting)
+  # Rest of the function remains the same...
   meta_data <- meta_data %>%
     dplyr::mutate(
-      variance = .data$metric_value * (1 - .data$metric_value) / .data$n_relevant,  # Approximate variance
+      variance = .data$metric_value * (1 - .data$metric_value) / .data$n_relevant,
       weight = 1 / .data$variance,
       weighted_metric = .data$metric_value * .data$weight
     )
 
-  # Calculate pooled estimate
   pooled_estimate <- sum(meta_data$weighted_metric, na.rm = TRUE) /
     sum(meta_data$weight, na.rm = TRUE)
 
-  # Calculate confidence interval
   pooled_variance <- 1 / sum(meta_data$weight, na.rm = TRUE)
   pooled_se <- sqrt(pooled_variance)
 
   ci_lower <- pooled_estimate - 1.96 * pooled_se
   ci_upper <- pooled_estimate + 1.96 * pooled_se
 
-  # Test for heterogeneity (Q statistic)
   q_statistic <- sum(meta_data$weight * (meta_data$metric_value - pooled_estimate)^2, na.rm = TRUE)
   df_q <- nrow(meta_data) - 1
   p_value_q <- 1 - stats::pchisq(q_statistic, df_q)
 
-  # I-squared statistic
   i_squared <- max(0, (q_statistic - df_q) / q_statistic) * 100
 
   result <- list(
@@ -719,7 +715,8 @@ test_that("benchmark testing handles edge cases", {
 
   metrics <- calc_precision_recall(retrieved, empty_gold)
   expect_equal(metrics$precision, 0)
-  expect_equal(metrics$recall, 0)
+  # When gold standard is empty, recall should be NA (not 0)
+  expect_true(is.na(metrics$recall))
 
   # Empty retrieved set
   empty_retrieved <- character(0)

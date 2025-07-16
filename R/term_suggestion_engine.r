@@ -44,8 +44,11 @@
 #' # Evaluate suggestions with validation corpus
 #' corpus <- data.frame(
 #'   id = paste0("art", 1:100),
-#'   title = paste("Research on", sample(c("diabetes", "diabetic", "glycemic"), 100, replace = TRUE)),
-#'   abstract = paste("Study about", sample(c("treatment", "therapy", "intervention"), 100, replace = TRUE)),
+#'   title = paste("Research on",
+#'                 sample(c("diabetes", "diabetic", "glycemic"), 100, replace = TRUE)),
+#'   abstract = paste("Study about",
+#'                    sample(c("treatment", "therapy", "intervention"),
+#'                           100, replace = TRUE)),
 #'   stringsAsFactors = FALSE
 #' )
 #'
@@ -1286,6 +1289,7 @@ sim_strategy_search <- function(strategy, corpus) {
 #'
 #' @param original_strategy Original strategy
 #' @param suggestions Term suggestions
+#' @importFrom stats runif
 #' @return List of optimized variants
 genetic_optimize <- function(original_strategy, suggestions) {
   # Simplified genetic algorithm implementation
@@ -1373,6 +1377,7 @@ sa_optimize <- function(original_strategy, suggestions) {
 #' @param n_clusters Number of clusters to create
 #' @param method Clustering method ("kmeans", "hierarchical")
 #' @return List with cluster assignments and recommendations
+#' @importFrom stats as.dist
 #' @export
 cluster_terms = function(terms, n_clusters = 3, method = "kmeans") {
 
@@ -1506,6 +1511,140 @@ add_ml_terms <- function(analyzer, ml_engine = NULL) {
   return(analyzer)
 }
 
+MLSearchAnalyzer <- R6::R6Class(
+  "MLSearchAnalyzer",
+  public = list(
+    search_results = NULL,
+    gold_standard = NULL,
+    metadata = NULL,
+    ml_engine = NULL,
+    base_analyzer = NULL,
+
+    initialize = function(base_analyzer_obj, ml_engine_obj) {
+      self$search_results <- base_analyzer_obj$search_results
+      self$gold_standard <- base_analyzer_obj$gold_standard
+      self$metadata <- base_analyzer_obj$metadata
+      self$ml_engine <- ml_engine_obj
+      self$base_analyzer <- base_analyzer_obj
+    },
+
+    calculate_metrics = function() {
+      self$base_analyzer$calculate_metrics()
+    },
+
+    visualize_performance = function(type = "overview") {
+      self$base_analyzer$visualize_performance(type)
+    },
+
+    suggest_terms = function(max_suggestions = 5, min_similarity = 0.6) {
+      if (is.null(self$metadata$search_terms)) {
+        stop("No search terms available in analyzer metadata")
+      }
+
+      suggestions <- self$ml_engine$suggest_terms(
+        terms = self$metadata$search_terms,
+        max_suggestions = max_suggestions,
+        min_similarity = min_similarity,
+        performance_data = extract_term_perf(self$search_results, self$metadata$search_terms)
+      )
+
+      return(suggestions)
+    },
+
+    eval_terms = function(suggested_terms, validation_corpus = NULL) {
+      if (is.null(validation_corpus)) {
+        validation_corpus <- self$search_results
+      }
+
+      evaluation <- self$ml_engine$eval_suggestions(
+        original_terms = self$metadata$search_terms,
+        suggested_terms = suggested_terms,
+        validation_corpus = validation_corpus,
+        gold_standard = self$gold_standard
+      )
+
+      return(evaluation)
+    },
+
+    has_ml_terms = function() {
+      return(TRUE)
+    },
+
+    get_ml_engine = function() {
+      return(self$ml_engine)
+    },
+
+    optimize_strategy = function(max_suggestions = 3, iterations = 2) {
+      cat("*** Starting ML-based strategy optimization...\n")
+
+      current_terms <- self$metadata$search_terms
+      optimization_history <- list()
+
+      for (i in 1:iterations) {
+        cat("Iteration", i, "of", iterations, "\n")
+
+        # Generate suggestions
+        suggestions <- self$suggest_terms(
+          max_suggestions = max_suggestions,
+          min_similarity = 0.7
+        )
+
+        # Extract best suggestions
+        new_terms <- current_terms
+        for (term_name in names(suggestions)) {
+          if (nrow(suggestions[[term_name]]$suggestions) > 0) {
+            best_suggestion <- suggestions[[term_name]]$suggestions$term[1]
+            new_terms <- c(new_terms, best_suggestion)
+            cat("  Added '", best_suggestion, "' for '", term_name, "'\n", sep = "")
+          }
+        }
+
+        new_terms <- unique(new_terms)
+
+        # Evaluate improvement
+        if (!is.null(self$gold_standard)) {
+          original_results <- sim_strategy_search(
+            list(terms = current_terms),
+            self$search_results
+          )
+          new_results <- sim_strategy_search(
+            list(terms = new_terms),
+            self$search_results
+          )
+
+          original_metrics <- calc_precision_recall(original_results, self$gold_standard)
+          new_metrics <- calc_precision_recall(new_results, self$gold_standard)
+
+          improvement <- new_metrics$f1_score - original_metrics$f1_score
+          cat("  F1 improvement:", sprintf("%+.3f", improvement), "\n")
+
+          optimization_history[[i]] <- list(
+            iteration = i,
+            original_f1 = original_metrics$f1_score,
+            new_f1 = new_metrics$f1_score,
+            improvement = improvement,
+            terms_added = setdiff(new_terms, current_terms)
+          )
+
+          if (improvement > 0) {
+            current_terms <- new_terms
+            self$metadata$search_terms <- current_terms
+          }
+        } else {
+          current_terms <- new_terms
+          self$metadata$search_terms <- current_terms
+        }
+      }
+
+      cat("*** Optimization complete!\n")
+      return(list(
+        optimized_terms = current_terms,
+        optimization_history = optimization_history
+      ))
+    }
+  )
+)
+
 #' Alternative ML-Enhanced SearchAnalyzer Factory
 #'
 #' @param search_results Data frame with search results
@@ -1525,142 +1664,7 @@ create_ml_analyzer <- function(search_results, gold_standard = NULL,
     ml_engine <- MLTermEngine$new()
   }
 
-  # Create a proper R6-like class for ML analyzer
-  MLSearchAnalyzer <- R6::R6Class(
-    "MLSearchAnalyzer",
-    public = list(
-      search_results = NULL,
-      gold_standard = NULL,
-      metadata = NULL,
-      ml_engine = NULL,
-      base_analyzer = NULL,
-
-      initialize = function(base_analyzer, ml_engine) {
-        self$search_results <- base_analyzer$search_results
-        self$gold_standard <- base_analyzer$gold_standard
-        self$metadata <- base_analyzer$metadata
-        self$ml_engine <- ml_engine
-        self$base_analyzer <- base_analyzer
-      },
-
-      calculate_metrics = function() {
-        self$base_analyzer$calculate_metrics()
-      },
-
-      visualize_performance = function(type = "overview") {
-        self$base_analyzer$visualize_performance(type)
-      },
-
-      suggest_terms = function(max_suggestions = 5, min_similarity = 0.6) {
-        if (is.null(self$metadata$search_terms)) {
-          stop("No search terms available in analyzer metadata")
-        }
-
-        suggestions <- self$ml_engine$suggest_terms(
-          terms = self$metadata$search_terms,
-          max_suggestions = max_suggestions,
-          min_similarity = min_similarity,
-          performance_data = extract_term_perf(self$search_results, self$metadata$search_terms)
-        )
-
-        return(suggestions)
-      },
-
-      eval_terms = function(suggested_terms, validation_corpus = NULL) {
-        if (is.null(validation_corpus)) {
-          validation_corpus <- self$search_results
-        }
-
-        evaluation <- self$ml_engine$eval_suggestions(
-          original_terms = self$metadata$search_terms,
-          suggested_terms = suggested_terms,
-          validation_corpus = validation_corpus,
-          gold_standard = self$gold_standard
-        )
-
-        return(evaluation)
-      },
-
-      has_ml_terms = function() {
-        return(TRUE)
-      },
-
-      get_ml_engine = function() {
-        return(self$ml_engine)
-      },
-
-      optimize_strategy = function(max_suggestions = 3, iterations = 2) {
-        cat("🤖 Starting ML-based strategy optimization...\n")
-
-        current_terms <- self$metadata$search_terms
-        optimization_history <- list()
-
-        for (i in 1:iterations) {
-          cat("Iteration", i, "of", iterations, "\n")
-
-          # Generate suggestions
-          suggestions <- self$suggest_terms(
-            max_suggestions = max_suggestions,
-            min_similarity = 0.7
-          )
-
-          # Extract best suggestions
-          new_terms <- current_terms
-          for (term_name in names(suggestions)) {
-            if (nrow(suggestions[[term_name]]$suggestions) > 0) {
-              best_suggestion <- suggestions[[term_name]]$suggestions$term[1]
-              new_terms <- c(new_terms, best_suggestion)
-              cat("  Added '", best_suggestion, "' for '", term_name, "'\n", sep = "")
-            }
-          }
-
-          new_terms <- unique(new_terms)
-
-          # Evaluate improvement
-          if (!is.null(self$gold_standard)) {
-            original_results <- sim_strategy_search(
-              list(terms = current_terms),
-              self$search_results
-            )
-            new_results <- sim_strategy_search(
-              list(terms = new_terms),
-              self$search_results
-            )
-
-            original_metrics <- calc_precision_recall(original_results, self$gold_standard)
-            new_metrics <- calc_precision_recall(new_results, self$gold_standard)
-
-            improvement <- new_metrics$f1_score - original_metrics$f1_score
-            cat("  F1 improvement:", sprintf("%+.3f", improvement), "\n")
-
-            optimization_history[[i]] <- list(
-              iteration = i,
-              original_f1 = original_metrics$f1_score,
-              new_f1 = new_metrics$f1_score,
-              improvement = improvement,
-              terms_added = setdiff(new_terms, current_terms)
-            )
-
-            if (improvement > 0) {
-              current_terms <- new_terms
-              self$metadata$search_terms <- current_terms
-            }
-          } else {
-            current_terms <- new_terms
-            self$metadata$search_terms <- current_terms
-          }
-        }
-
-        cat("✅ Optimization complete!\n")
-        return(list(
-          optimized_terms = current_terms,
-          optimization_history = optimization_history
-        ))
-      }
-    )
-  )
-
-  # Create and return the enhanced analyzer
+  # Create and return the enhanced analyzer using the pre-defined class
   enhanced_analyzer <- MLSearchAnalyzer$new(base_analyzer, ml_engine)
   return(enhanced_analyzer)
 }

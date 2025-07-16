@@ -4,4 +4,16 @@
 #' R CMD check NOTEs about undefined global functions or variables.
 
 # Declare global variables used with the `.` pronoun in pipelines
-if(getRversion() >= "2.15.1") utils::globalVariables(c("."))
+if(getRversion() >= "2.15.1") {
+  utils::globalVariables(c(
+    ".",
+    # ggplot2 aesthetic variables used in aes()
+    "coverage",
+    "precision",
+    "articles_with_term",
+    "highlighted",
+    "term",
+    "value",
+    "metric"
+  ))
+}

@@ -28,12 +28,11 @@
 #' print(overview_plot)
 #' @import ggplot2
 #' @importFrom dplyr %>%
-#' @importFrom tibble tibble
 #' @seealso \code{\link{plot_pr_curve}}, \code{\link{plot_temporal}}
 #' @export
 plot_overview <- function(metrics) {
-  # Extract key metrics for overview
-  overview_data <- tibble::tibble(
+  # Extract key metrics for overview - using base R data.frame instead of tibble
+  overview_data <- data.frame(
     metric = c("Precision", "Recall", "F1 Score", "Coverage", "Efficiency"),
     value = c(
       metrics$precision_recall$precision,
@@ -42,7 +41,8 @@ plot_overview <- function(metrics) {
       metrics$coverage$total_coverage,
       metrics$efficiency$efficiency_score
     ),
-    category = c("Accuracy", "Accuracy", "Accuracy", "Completeness", "Efficiency")
+    category = c("Accuracy", "Accuracy", "Accuracy", "Completeness", "Efficiency"),
+    stringsAsFactors = FALSE
   )
 
   ggplot2::ggplot(overview_data, ggplot2::aes(x = .data$metric, y = .data$value, fill = .data$category)) +
@@ -75,12 +75,10 @@ plot_overview <- function(metrics) {
 #' @param relevant Vector of relevant article IDs
 #' @param thresholds Vector of threshold values
 #' @return ggplot object
-#' @importFrom purrr map_dfr
-#' @importFrom tibble tibble
 #' @export
 plot_pr_curve <- function(retrieved, relevant, thresholds = seq(0, 1, 0.05)) {
-  # Calculate precision and recall at different thresholds
-  pr_data <- purrr::map_dfr(thresholds, function(threshold) {
+  # Calculate precision and recall at different thresholds - using base R instead of purrr::map_dfr
+  pr_list <- lapply(thresholds, function(threshold) {
     # Simulate ranking scores (in practice, these would come from actual search scores)
     n_retrieve <- round(length(retrieved) * (1 - threshold))
     if (n_retrieve == 0) n_retrieve <- 1
@@ -89,13 +87,16 @@ plot_pr_curve <- function(retrieved, relevant, thresholds = seq(0, 1, 0.05)) {
 
     metrics <- calc_precision_recall(subset_retrieved, relevant)
 
-    tibble::tibble(
+    data.frame(
       threshold = threshold,
       precision = metrics$precision,
       recall = metrics$recall,
-      f1_score = metrics$f1_score
+      f1_score = metrics$f1_score,
+      stringsAsFactors = FALSE
     )
   })
+
+  pr_data <- do.call(rbind, pr_list)
 
   # Create the plot
   ggplot2::ggplot(pr_data, ggplot2::aes(x = .data$recall, y = .data$precision)) +
@@ -121,20 +122,30 @@ plot_pr_curve <- function(retrieved, relevant, thresholds = seq(0, 1, 0.05)) {
 #' @param search_results Data frame with search results including date column
 #' @param gold_standard Vector of relevant article IDs
 #' @return ggplot object
-#' @importFrom dplyr mutate count group_by summarise filter
-#' @importFrom tidyr complete
 #' @importFrom lubridate year
 #' @export
 plot_temporal <- function(search_results, gold_standard = NULL) {
-  # Prepare temporal data
-  temporal_data <- search_results %>%
-    dplyr::mutate(
-      date = as.Date(.data$date),
-      year = lubridate::year(.data$date),
-      is_relevant = if (!is.null(gold_standard)) .data$id %in% gold_standard else FALSE
-    ) %>%
-    dplyr::count(.data$year, .data$is_relevant) %>%
-    tidyr::complete(.data$year, .data$is_relevant, fill = list(n = 0))
+  # Prepare temporal data using base R instead of dplyr
+  search_results$date <- as.Date(search_results$date)
+  search_results$year <- lubridate::year(search_results$date)
+  search_results$is_relevant <- if (!is.null(gold_standard)) search_results$id %in% gold_standard else FALSE
+
+  # Count by year and relevance - base R approach
+  temporal_data <- aggregate(
+    search_results$id,
+    by = list(year = search_results$year, is_relevant = search_results$is_relevant),
+    length
+  )
+  names(temporal_data)[3] <- "n"
+
+  # Create complete combinations of year and is_relevant for missing combinations
+  all_years <- unique(temporal_data$year)
+  all_relevance <- c(TRUE, FALSE)
+  complete_combinations <- expand.grid(year = all_years, is_relevant = all_relevance)
+
+  # Merge with actual data and fill missing with 0
+  temporal_data <- merge(complete_combinations, temporal_data, all.x = TRUE)
+  temporal_data$n[is.na(temporal_data$n)] <- 0
 
   # Create stacked bar chart
   p <- ggplot2::ggplot(temporal_data, ggplot2::aes(x = .data$year, y = .data$n, fill = .data$is_relevant)) +
@@ -160,15 +171,25 @@ plot_temporal <- function(search_results, gold_standard = NULL) {
 
   # Add relevance rate if gold standard is provided
   if (!is.null(gold_standard)) {
-    relevance_data <- temporal_data %>%
-      dplyr::group_by(.data$year) %>%
-      dplyr::summarise(
-        total = sum(.data$n),
-        relevant = sum(.data$n[.data$is_relevant]),
-        rate = .data$relevant / .data$total,
-        .groups = "drop"
-      ) %>%
-      dplyr::filter(.data$total > 0)
+    # Calculate relevance data using base R
+    relevance_data <- aggregate(
+      temporal_data$n,
+      by = list(year = temporal_data$year),
+      sum
+    )
+    names(relevance_data)[2] <- "total"
+
+    relevant_data <- aggregate(
+      temporal_data$n[temporal_data$is_relevant],
+      by = list(year = temporal_data$year[temporal_data$is_relevant]),
+      sum
+    )
+    names(relevant_data) <- c("year", "relevant")
+
+    relevance_data <- merge(relevance_data, relevant_data, all.x = TRUE)
+    relevance_data$relevant[is.na(relevance_data$relevant)] <- 0
+    relevance_data$rate <- relevance_data$relevant / relevance_data$total
+    relevance_data <- relevance_data[relevance_data$total > 0, ]
 
     p <- p +
       ggplot2::geom_line(data = relevance_data,
@@ -186,40 +207,62 @@ plot_temporal <- function(search_results, gold_standard = NULL) {
 #' @param results_by_database List of result sets by database
 #' @param gold_standard Vector of relevant article IDs
 #' @return ggplot object
-#' @importFrom purrr map_dfr
-#' @importFrom dplyr select
-#' @importFrom tidyr pivot_longer
 #' @export
 plot_db_performance <- function(results_by_database, gold_standard = NULL) {
-  # Calculate metrics for each database
-  db_metrics <- purrr::map_dfr(results_by_database, function(db_results) {
+  # Calculate metrics for each database - using base R instead of purrr::map_dfr
+  db_list <- lapply(names(results_by_database), function(db_name) {
+    db_results <- results_by_database[[db_name]]
     if (!is.null(gold_standard)) {
       metrics <- calc_precision_recall(db_results, gold_standard)
-      tibble::tibble(
+      data.frame(
+        database = db_name,
         total_results = length(db_results),
         relevant_results = metrics$true_positives,
         precision = metrics$precision,
         recall = metrics$recall,
-        f1_score = metrics$f1_score
+        f1_score = metrics$f1_score,
+        stringsAsFactors = FALSE
       )
     } else {
-      tibble::tibble(
+      data.frame(
+        database = db_name,
         total_results = length(db_results),
         relevant_results = NA,
         precision = NA,
         recall = NA,
-        f1_score = NA
+        f1_score = NA,
+        stringsAsFactors = FALSE
       )
     }
-  }, .id = "database")
+  })
+
+  db_metrics <- do.call(rbind, db_list)
 
   # Create comparison plot
   if (!is.null(gold_standard)) {
-    # Multi-metric comparison
-    db_long <- db_metrics %>%
-      dplyr::select(.data$database, .data$precision, .data$recall, .data$f1_score) %>%
-      tidyr::pivot_longer(cols = c("precision", "recall", "f1_score"),
-                          names_to = "metric", values_to = "value")
+    # Multi-metric comparison - convert to long format using base R
+    precision_data <- data.frame(
+      database = db_metrics$database,
+      metric = "precision",
+      value = db_metrics$precision,
+      stringsAsFactors = FALSE
+    )
+
+    recall_data <- data.frame(
+      database = db_metrics$database,
+      metric = "recall",
+      value = db_metrics$recall,
+      stringsAsFactors = FALSE
+    )
+
+    f1_data <- data.frame(
+      database = db_metrics$database,
+      metric = "f1_score",
+      value = db_metrics$f1_score,
+      stringsAsFactors = FALSE
+    )
+
+    db_long <- rbind(precision_data, recall_data, f1_data)
 
     ggplot2::ggplot(db_long, ggplot2::aes(x = .data$database, y = .data$value, fill = .data$metric)) +
       ggplot2::geom_col(position = "dodge", alpha = 0.8) +
@@ -267,38 +310,37 @@ plot_db_performance <- function(results_by_database, gold_standard = NULL) {
 #' @param search_terms Vector of search terms
 #' @param gold_standard Vector of relevant article IDs
 #' @return ggplot object
-#' @importFrom purrr map_dfr
-#' @importFrom stringr str_detect
-#' @importFrom dplyr filter pull
-#' @importFrom stats reorder
 #' @export
 plot_keyword_eff <- function(search_results, search_terms, gold_standard = NULL) {
-  # Analyze keyword effectiveness
-  keyword_stats <- purrr::map_dfr(search_terms, function(term) {
-    # Find articles containing this term
-    containing_term <- search_results %>%
-      dplyr::filter(stringr::str_detect(tolower(paste(.data$title, .data$abstract, sep = " ")),
-                                        tolower(term)))
+  # Analyze keyword effectiveness - using base R instead of purrr::map_dfr
+  keyword_list <- lapply(search_terms, function(term) {
+    # Find articles containing this term - using base R instead of stringr::str_detect
+    combined_text <- tolower(paste(search_results$title, search_results$abstract, sep = " "))
+    containing_term <- search_results[grepl(tolower(term), combined_text), ]
 
     if (!is.null(gold_standard)) {
       relevant_with_term <- intersect(containing_term$id, gold_standard)
-      tibble::tibble(
+      data.frame(
         term = term,
         total_articles = nrow(containing_term),
         relevant_articles = length(relevant_with_term),
-        precision = length(relevant_with_term) / nrow(containing_term),
-        coverage = length(relevant_with_term) / length(gold_standard)
+        precision = if(nrow(containing_term) > 0) length(relevant_with_term) / nrow(containing_term) else 0,
+        coverage = length(relevant_with_term) / length(gold_standard),
+        stringsAsFactors = FALSE
       )
     } else {
-      tibble::tibble(
+      data.frame(
         term = term,
         total_articles = nrow(containing_term),
         relevant_articles = NA,
         precision = NA,
-        coverage = NA
+        coverage = NA,
+        stringsAsFactors = FALSE
       )
     }
   })
+
+  keyword_stats <- do.call(rbind, keyword_list)
 
   # Create effectiveness plot
   if (!is.null(gold_standard)) {
@@ -321,8 +363,10 @@ plot_keyword_eff <- function(search_results, search_terms, gold_standard = NULL)
       ) +
       ggplot2::xlim(0, 1) + ggplot2::ylim(0, 1)
   } else {
-    # Just show article counts
-    ggplot2::ggplot(keyword_stats, ggplot2::aes(x = stats::reorder(.data$term, .data$total_articles), y = .data$total_articles)) +
+    # Just show article counts - using base R instead of stats::reorder
+    keyword_stats$term_ordered <- reorder(keyword_stats$term, keyword_stats$total_articles)
+
+    ggplot2::ggplot(keyword_stats, ggplot2::aes(x = .data$term_ordered, y = .data$total_articles)) +
       ggplot2::geom_col(fill = "#2E86AB", alpha = 0.8) +
       ggplot2::coord_flip() +
       ggplot2::labs(
@@ -343,12 +387,11 @@ plot_keyword_eff <- function(search_results, search_terms, gold_standard = NULL)
 #'
 #' @param flow_data List containing PRISMA flow numbers
 #' @return ggplot object
-#' @importFrom tibble tibble
 #' @export
 create_prisma <- function(flow_data) {
-  # Carefully designed PRISMA flow with proper spacing and text containment
+  # Carefully designed PRISMA flow with proper spacing and text containment - using base R data.frame
 
-  boxes <- tibble::tibble(
+  boxes <- data.frame(
     id = 1:7,
     # Main flow boxes positioned vertically with good spacing
     # Exclusion boxes positioned to the right with adequate separation
@@ -366,25 +409,28 @@ create_prisma <- function(flow_data) {
       paste("Records excluded\n(n =", flow_data$excluded_title_abstract, ")"),
       paste("Full-text articles excluded\n(n =", flow_data$excluded_full_text, ")")
     ),
-    fill = c(rep("#E8F4FD", 5), rep("#FFF2E8", 2))
+    fill = c(rep("#E8F4FD", 5), rep("#FFF2E8", 2)),
+    stringsAsFactors = FALSE
   )
 
   # Vertical arrows connecting main flow boxes
   # Positioned to connect box bottoms to box tops with clear spacing
-  arrows <- tibble::tibble(
+  arrows <- data.frame(
     x = c(5, 5, 5, 5),
     y = c(11.25, 9.25, 7.25, 5.25),    # Start from bottom of each box (y - height/2)
     xend = c(5, 5, 5, 5),
-    yend = c(10.75, 8.75, 6.75, 4.75)  # End at top of next box (y + height/2)
+    yend = c(10.75, 8.75, 6.75, 4.75),  # End at top of next box (y + height/2)
+    stringsAsFactors = FALSE
   )
 
   # Horizontal arrows from main boxes to exclusion boxes
   # Connect from right edge of main boxes to left edge of exclusion boxes
-  exclusion_arrows <- tibble::tibble(
+  exclusion_arrows <- data.frame(
     x = c(9.5, 9.5),        # Start from right edge of main boxes (5 + 9/2 = 9.5)
     y = c(8, 6),            # At height of screening and full-text boxes
     xend = c(9, 9),         # End before exclusion boxes (12 - 6/2 = 9)
-    yend = c(8, 6)
+    yend = c(8, 6),
+    stringsAsFactors = FALSE
   )
 
   # Create the plot with proper canvas size and spacing
@@ -453,10 +499,6 @@ create_prisma <- function(flow_data) {
 #'
 #' @param sensitivity_results Results from sensitivity analysis
 #' @return ggplot object
-#' @importFrom dplyr select mutate
-#' @importFrom tidyr pivot_longer
-#' @importFrom stringr str_remove
-#' @importFrom purrr pmap_chr
 #' @export
 plot_sensitivity <- function(sensitivity_results) {
   # Prepare data for heatmap
@@ -465,20 +507,36 @@ plot_sensitivity <- function(sensitivity_results) {
     param_cols <- setdiff(names(sensitivity_results),
                           c("mean_precision", "mean_recall", "mean_f1"))
 
-    # Create parameter combination labels
-    sensitivity_results <- sensitivity_results %>%
-      dplyr::mutate(
-        param_combo = purrr::pmap_chr(dplyr::select(., dplyr::all_of(param_cols)),
-                                      function(...) paste(paste(names(list(...)), list(...), sep = "="),
-                                                          collapse = "; "))
-      )
+    # Create parameter combination labels using base R
+    param_combo_list <- apply(sensitivity_results[, param_cols, drop = FALSE], 1, function(row) {
+      paste(paste(names(row), row, sep = "="), collapse = "; ")
+    })
 
-    # Reshape for plotting
-    plot_data <- sensitivity_results %>%
-      dplyr::select(.data$param_combo, .data$mean_precision, .data$mean_recall, .data$mean_f1) %>%
-      tidyr::pivot_longer(cols = c("mean_precision", "mean_recall", "mean_f1"),
-                          names_to = "metric", values_to = "value") %>%
-      dplyr::mutate(metric = stringr::str_remove(.data$metric, "mean_"))
+    sensitivity_results$param_combo <- param_combo_list
+
+    # Reshape for plotting using base R instead of tidyr::pivot_longer
+    precision_data <- data.frame(
+      param_combo = sensitivity_results$param_combo,
+      metric = "precision",
+      value = sensitivity_results$mean_precision,
+      stringsAsFactors = FALSE
+    )
+
+    recall_data <- data.frame(
+      param_combo = sensitivity_results$param_combo,
+      metric = "recall",
+      value = sensitivity_results$mean_recall,
+      stringsAsFactors = FALSE
+    )
+
+    f1_data <- data.frame(
+      param_combo = sensitivity_results$param_combo,
+      metric = "f1",
+      value = sensitivity_results$mean_f1,
+      stringsAsFactors = FALSE
+    )
+
+    plot_data <- rbind(precision_data, recall_data, f1_data)
 
     ggplot2::ggplot(plot_data, ggplot2::aes(x = .data$metric, y = .data$param_combo, fill = .data$value)) +
       ggplot2::geom_tile(color = "white", size = 0.5) +

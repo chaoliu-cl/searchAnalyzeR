@@ -31,6 +31,7 @@ knitr::opts_chunk$set(
 has_rentrez <- requireNamespace("rentrez", quietly = TRUE)
 has_xml2 <- requireNamespace("xml2", quietly = TRUE)
 has_patchwork <- requireNamespace("patchwork", quietly = TRUE)
+has_tidyr <- requireNamespace("tidyr", quietly = TRUE)
 
 # Create mock data for demonstration when packages aren't available
 create_mock_data <- function() {
@@ -139,7 +140,7 @@ library(searchAnalyzeR)
 library(dplyr)
 library(ggplot2)
 library(lubridate)
-library(tidyr)
+library(tidyr)  # Add this line
 
 # Load optional packages if available
 if (has_rentrez) library(rentrez)

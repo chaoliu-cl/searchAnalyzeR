@@ -6,7 +6,6 @@
 
 library(testthat)
 library(dplyr)
-library(stringr)
 library(readr)
 library(openxlsx)
 library(jsonlite)
@@ -108,32 +107,30 @@ test_that("export_to_csv works correctly", {
 test_that("export_to_csv includes metadata when requested", {
   search_results <- create_test_search_results()
 
-  # Add metadata attributes with complex data types (now handled properly)
   attr(search_results, "merge_info") <- list(
-    sources = c("PubMed", "Embase", "Scopus"),  # Vector that should be handled
+    sources = c("PubMed", "Embase", "Scopus"),
     total_before_dedup = 105,
     total_after_dedup = 100,
     merge_timestamp = Sys.time(),
-    complex_list = list(a = 1, b = 2)  # Nested list that should be handled
+    complex_list = list(a = 1, b = 2)
   )
 
   temp_file <- tempfile(fileext = ".csv")
   result_file <- export_to_csv(search_results, temp_file, include_metadata = TRUE)
-  metadata_file <- str_replace(temp_file, "\\.csv$", "_metadata.csv")
+  # Use base R instead of stringr
+  metadata_file <- gsub("\\.csv$", "_metadata.csv", temp_file)
 
   expect_true(file.exists(result_file))
   expect_true(file.exists(metadata_file))
 
-  # Verify metadata content
   metadata <- read_csv(metadata_file, show_col_types = FALSE)
   expect_true("attribute" %in% names(metadata))
   expect_true("value" %in% names(metadata))
   expect_true("sources" %in% metadata$attribute)
 
-  # Verify that vector was properly converted to string
   sources_row <- metadata[metadata$attribute == "sources", ]
-  expect_true(str_detect(sources_row$value, "PubMed"))
-  expect_true(str_detect(sources_row$value, ","))  # Should be comma-separated
+  expect_true(grepl("PubMed", sources_row$value))
+  expect_true(grepl(",", sources_row$value))
 
   file.remove(c(temp_file, metadata_file))
 })
@@ -201,15 +198,13 @@ test_that("export_to_ris creates valid RIS file", {
   expect_true(file.exists(result_file))
   expect_equal(result_file, temp_file)
 
-  # Verify RIS content
   ris_content <- readLines(temp_file)
-  expect_true(any(str_detect(ris_content, "^TY  - JOUR")))
-  expect_true(any(str_detect(ris_content, "^TI  - ")))
-  expect_true(any(str_detect(ris_content, "^AB  - ")))
-  expect_true(any(str_detect(ris_content, "^ER  - ")))
+  expect_true(any(grepl("^TY  - JOUR", ris_content)))
+  expect_true(any(grepl("^TI  - ", ris_content)))
+  expect_true(any(grepl("^AB  - ", ris_content)))
+  expect_true(any(grepl("^ER  - ", ris_content)))
 
-  # Check that we have the right number of records
-  record_count <- sum(str_detect(ris_content, "^TY  - "))
+  record_count <- sum(grepl("^TY  - ", ris_content))
   expect_equal(record_count, nrow(search_results))
 
   file.remove(temp_file)
@@ -224,15 +219,15 @@ test_that("export_to_bibtex creates valid BibTeX file", {
   expect_true(file.exists(result_file))
   expect_equal(result_file, temp_file)
 
-  # Verify BibTeX content
+  # Verify BibTeX content using base R instead of stringr
   bibtex_content <- readLines(temp_file)
-  expect_true(any(str_detect(bibtex_content, "^@article\\{")))
-  expect_true(any(str_detect(bibtex_content, "title = \\{")))
-  expect_true(any(str_detect(bibtex_content, "abstract = \\{")))
-  expect_true(any(str_detect(bibtex_content, "^\\}$")))
+  expect_true(any(grepl("^@article\\{", bibtex_content)))
+  expect_true(any(grepl("title = \\{", bibtex_content)))
+  expect_true(any(grepl("abstract = \\{", bibtex_content)))
+  expect_true(any(grepl("^\\}$", bibtex_content)))
 
   # Check that we have the right number of records
-  record_count <- sum(str_detect(bibtex_content, "^@article\\{"))
+  record_count <- sum(grepl("^@article\\{", bibtex_content))
   expect_equal(record_count, nrow(search_results))
 
   file.remove(temp_file)
@@ -247,15 +242,15 @@ test_that("export_to_endnote creates valid EndNote file", {
   expect_true(file.exists(result_file))
   expect_equal(result_file, temp_file)
 
-  # Verify EndNote content
+  # Verify EndNote content using base R instead of stringr
   endnote_content <- readLines(temp_file)
-  expect_true(any(str_detect(endnote_content, "^%0 Journal Article")))
-  expect_true(any(str_detect(endnote_content, "^%T ")))
-  expect_true(any(str_detect(endnote_content, "^%X ")))
-  expect_true(any(str_detect(endnote_content, "^%A ")))
+  expect_true(any(grepl("^%0 Journal Article", endnote_content)))
+  expect_true(any(grepl("^%T ", endnote_content)))
+  expect_true(any(grepl("^%X ", endnote_content)))
+  expect_true(any(grepl("^%A ", endnote_content)))
 
   # Check that we have the right number of records
-  record_count <- sum(str_detect(endnote_content, "^%0 Journal Article"))
+  record_count <- sum(grepl("^%0 Journal Article", endnote_content))
   expect_equal(record_count, nrow(search_results))
 
   file.remove(temp_file)
@@ -279,17 +274,15 @@ test_that("export_results handles multiple formats", {
   expect_length(created_files, 4)
   expect_true(all(file.exists(created_files)))
 
-  # Verify file extensions
-  extensions <- str_extract(created_files, "\\.[^.]+$")
+  # Use base R instead of stringr
+  extensions <- gsub(".*\\.", ".", created_files)
   expect_true(".csv" %in% extensions)
   expect_true(".xlsx" %in% extensions)
   expect_true(".ris" %in% extensions)
   expect_true(".bib" %in% extensions)
 
-  # Clean up
   file.remove(created_files)
 
-  # Also remove metadata file if it exists
   metadata_file <- paste0(temp_base, "_metadata.csv")
   if (file.exists(metadata_file)) {
     file.remove(metadata_file)
@@ -311,8 +304,8 @@ test_that("export_results works with all supported formats", {
   expect_length(created_files, 5)
   expect_true(all(file.exists(created_files)))
 
-  # Verify all expected extensions
-  extensions <- str_extract(created_files, "\\.[^.]+$")
+  # Verify all expected extensions using base R
+  extensions <- gsub(".*\\.", ".", created_files)
   expect_true(all(c(".csv", ".xlsx", ".ris", ".bib", ".enw") %in% extensions))
 
   file.remove(created_files)
@@ -447,11 +440,11 @@ test_that("create_data_package creates complete package structure", {
   expect_true(file.exists(file.path(package_dir, "MANIFEST.csv")))
   expect_true(file.exists(file.path(package_dir, "PACKAGE_INFO.csv")))
 
-  # Verify README content
+  # Verify README content using base R instead of stringr
   readme_content <- readLines(file.path(package_dir, "README.md"))
   readme_text <- paste(readme_content, collapse = "\n")
-  expect_true(str_detect(readme_text, "Search Analysis Data Package"))
-  expect_true(str_detect(readme_text, as.character(nrow(search_results))))
+  expect_true(grepl("Search Analysis Data Package", readme_text))
+  expect_true(grepl(as.character(nrow(search_results)), readme_text))
 
   # Clean up
   unlink(package_dir, recursive = TRUE)
@@ -511,9 +504,9 @@ test_that("package manifest is created correctly", {
   expect_true("size_bytes" %in% names(manifest))
   expect_true("checksum" %in% names(manifest))
 
-  # Check that files are listed (should handle paths properly now)
-  expect_true(any(str_detect(manifest$file, "test_file.txt")))
-  expect_true(any(str_detect(manifest$file, "sub_file.txt")))
+  # Check that files are listed (should handle paths properly now) using base R
+  expect_true(any(grepl("test_file.txt", manifest$file)))
+  expect_true(any(grepl("sub_file.txt", manifest$file)))
 
   # Verify package info
   package_info <- read_csv(file.path(package_dir, "PACKAGE_INFO.csv"), show_col_types = FALSE)
@@ -559,10 +552,35 @@ test_that("create_data_dictionary generates correct structure", {
 # =============================================================================
 
 test_that("export_validation_csv works with validation results", {
+  # Create validation results with all expected fields
   validation_results <- list(
-    benchmark1 = list(precision = 0.85, recall = 0.72, f1_score = 0.78),
-    benchmark2 = list(precision = 0.75, recall = 0.82, f1_score = 0.78),
-    benchmark3 = list(precision = 0.90, recall = 0.65, f1_score = 0.75)
+    benchmark1 = list(
+      precision = 0.85,
+      recall = 0.72,
+      f1_score = 0.78,
+      true_positives = 17,
+      false_positives = 3,
+      false_negatives = 7,
+      number_needed_to_read = 1.18
+    ),
+    benchmark2 = list(
+      precision = 0.75,
+      recall = 0.82,
+      f1_score = 0.78,
+      true_positives = 25,
+      false_positives = 8,
+      false_negatives = 5,
+      number_needed_to_read = 1.33
+    ),
+    benchmark3 = list(
+      precision = 0.90,
+      recall = 0.65,
+      f1_score = 0.75,
+      true_positives = 13,
+      false_positives = 2,
+      false_negatives = 7,
+      number_needed_to_read = 1.11
+    )
   )
 
   temp_file <- tempfile(fileext = ".csv")
@@ -580,9 +598,26 @@ test_that("export_validation_csv works with validation results", {
 })
 
 test_that("export_validation_xlsx works with validation results", {
+  # Create validation results with all expected fields (as would come from calc_precision_recall)
   validation_results <- list(
-    benchmark1 = list(precision = 0.85, recall = 0.72, f1_score = 0.78),
-    benchmark2 = list(precision = 0.75, recall = 0.82, f1_score = 0.78)
+    benchmark1 = list(
+      precision = 0.85,
+      recall = 0.72,
+      f1_score = 0.78,
+      true_positives = 17,
+      false_positives = 3,
+      false_negatives = 7,
+      number_needed_to_read = 1.18
+    ),
+    benchmark2 = list(
+      precision = 0.75,
+      recall = 0.82,
+      f1_score = 0.78,
+      true_positives = 25,
+      false_positives = 8,
+      false_negatives = 5,
+      number_needed_to_read = 1.33
+    )
   )
 
   temp_file <- tempfile(fileext = ".xlsx")

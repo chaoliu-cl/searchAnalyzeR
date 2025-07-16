@@ -128,7 +128,7 @@ ReproducibilityManager <- R6::R6Class(
     validate_repro = function(package_path) {
       # Load original data
       original_strategy <- readRDS(file.path(package_path, "data", "search_strategy.rds"))
-      original_results <- read_csv(file.path(package_path, "data", "search_results.csv"))
+      original_results <- read.csv(file.path(package_path, "data", "search_results.csv"), stringsAsFactors = FALSE)
 
       # Re-execute search
       reproduced_results <- private$re_execute_search(original_strategy)
@@ -184,127 +184,123 @@ ReproducibilityManager <- R6::R6Class(
     },
 
     generate_reproduction_script = function(package_dir, strategy, config) {
-      script_content <- glue::glue('
-# Reproduction Script for Search Strategy Analysis
-# Generated: {Sys.time()}
+      # Using base R paste instead of glue::glue
+      script_content <- paste0(
+        "# Reproduction Script for Search Strategy Analysis\n",
+        "# Generated: ", Sys.time(), "\n\n",
+        "library(searchAnalyzeR)\n",
+        "library(tidyverse)\n\n",
+        "# Load original data\n",
+        "search_strategy <- readRDS(\"data/search_strategy.rds\")\n",
+        "search_results <- read_csv(\"data/search_results.csv\")\n",
+        "analysis_config <- readRDS(\"data/analysis_config.rds\")\n\n",
+        "# Initialize analyzer\n",
+        "analyzer <- SearchAnalyzer$new(\n",
+        "  search_results = search_results,\n",
+        "  gold_standard = analysis_config$gold_standard,\n",
+        "  search_strategy = search_strategy\n",
+        ")\n\n",
+        "# Calculate metrics\n",
+        "metrics <- analyzer$calculate_metrics()\n\n",
+        "# Generate visualizations\n",
+        "plots <- list(\n",
+        "  overview = analyzer$visualize_performance(\"overview\"),\n",
+        "  precision_recall = analyzer$visualize_performance(\"precision_recall\")\n",
+        ")\n\n",
+        "# Generate report\n",
+        "reporter <- PRISMAReporter$new()\n",
+        "report_path <- reporter$generate_report(analyzer, output_format = \"html\")\n\n",
+        "cat(\"Analysis completed successfully!\\n\")\n",
+        "cat(\"Report saved to:\", report_path, \"\\n\")\n"
+      )
 
-library(searchAnalyzeR)
-library(tidyverse)
-
-# Load original data
-search_strategy <- readRDS("data/search_strategy.rds")
-search_results <- read_csv("data/search_results.csv")
-analysis_config <- readRDS("data/analysis_config.rds")
-
-# Initialize analyzer
-analyzer <- SearchAnalyzer$new(
-  search_results = search_results,
-  gold_standard = analysis_config$gold_standard,
-  search_strategy = search_strategy
-)
-
-# Calculate metrics
-metrics <- analyzer$calculate_metrics()
-
-# Generate visualizations
-plots <- list(
-  overview = analyzer$visualize_performance("overview"),
-  precision_recall = analyzer$visualize_performance("precision_recall")
-)
-
-# Generate report
-reporter <- PRISMAReporter$new()
-report_path <- reporter$generate_report(analyzer, output_format = "html")
-
-cat("Analysis completed successfully!\\n")
-cat("Report saved to:", report_path, "\\n")
-      ')
-
-writeLines(script_content, file.path(package_dir, "code", "reproduce_analysis.R"))
+      writeLines(script_content, file.path(package_dir, "code", "reproduce_analysis.R"))
     },
 
-create_manifest = function(package_dir) {
-  files <- list.files(package_dir, recursive = TRUE, full.names = TRUE)
+    create_manifest = function(package_dir) {
+      files <- list.files(package_dir, recursive = TRUE, full.names = TRUE)
 
-  manifest <- do.call(rbind, lapply(files, function(file) {
-    data.frame(
-      file = file,
-      size = file.info(file)$size,
-      modified = file.info(file)$mtime,
-      checksum = digest::digest(file, file = TRUE)
-    )
-  }))
+      # Using base R instead of lapply + do.call(rbind, ...)
+      manifest_list <- list()
+      for (i in seq_along(files)) {
+        file <- files[i]
+        manifest_list[[i]] <- data.frame(
+          file = file,
+          size = file.info(file)$size,
+          modified = file.info(file)$mtime,
+          checksum = digest::digest(file, file = TRUE),
+          stringsAsFactors = FALSE
+        )
+      }
 
-  write.csv(manifest, file.path(package_dir, "MANIFEST.csv"), row.names = FALSE)
-},
+      manifest <- do.call(rbind, manifest_list)
+      write.csv(manifest, file.path(package_dir, "MANIFEST.csv"), row.names = FALSE)
+    },
 
-create_readme = function(package_dir, strategy) {
-  readme_content <- glue::glue('
-# Reproducible Search Strategy Package
+    create_readme = function(package_dir, strategy) {
+      # Using base R paste instead of glue::glue
+      readme_content <- paste0(
+        "# Reproducible Search Strategy Package\n\n",
+        "Generated: ", Sys.time(), "\n",
+        "Strategy: ", paste(strategy$terms, collapse = ", "), "\n\n",
+        "## Contents\n\n",
+        "- `data/`: Original data files\n",
+        "- `code/`: Reproduction scripts\n",
+        "- `reports/`: Generated reports\n\n",
+        "## Usage\n\n",
+        "Run the reproduction script:\n",
+        "```r\n",
+        "source(\"code/reproduce_analysis.R\")\n",
+        "```\n"
+      )
 
-Generated: {Sys.time()}
-Strategy: {paste(strategy$terms, collapse = ", ")}
+      writeLines(readme_content, file.path(package_dir, "README.md"))
+    },
 
-## Contents
+    re_execute_search = function(strategy) {
+      # Placeholder for re-executing search
+      # In practice, this would re-run the actual search
+      warning("Search re-execution not implemented - returning placeholder results")
+      return(data.frame(id = character(0), stringsAsFactors = FALSE))
+    },
 
-- `data/`: Original data files
-- `code/`: Reproduction scripts
-- `reports/`: Generated reports
+    compare_results = function(original, reproduced) {
+      # Compare original and reproduced results
+      list(
+        original_count = nrow(original),
+        reproduced_count = nrow(reproduced),
+        match_rate = length(intersect(original$id, reproduced$id)) / max(nrow(original), 1)
+      )
+    },
 
-## Usage
+    get_pkg_versions = function() {
+      installed_packages <- installed.packages()
+      relevant_packages <- c("searchAnalyzeR", "dplyr", "ggplot2")
 
-Run the reproduction script:
-```r
-source("code/reproduce_analysis.R")
-```
-      ')
+      # Using base R sapply instead of specialized functions
+      versions <- sapply(relevant_packages, function(pkg) {
+        if (pkg %in% rownames(installed_packages)) {
+          as.character(packageVersion(pkg))
+        } else {
+          "Not installed"
+        }
+      })
 
-  writeLines(readme_content, file.path(package_dir, "README.md"))
-},
+      return(versions)
+    },
 
-re_execute_search = function(strategy) {
-  # Placeholder for re-executing search
-  # In practice, this would re-run the actual search
-  warning("Search re-execution not implemented - returning placeholder results")
-  return(data.frame(id = character(0)))
-},
+    get_git_commit = function() {
+      # Try to get git commit hash
+      tryCatch({
+        system("git rev-parse HEAD", intern = TRUE)
+      }, error = function(e) {
+        "Git not available or not a git repository"
+      })
+    },
 
-compare_results = function(original, reproduced) {
-  # Compare original and reproduced results
-  list(
-    original_count = nrow(original),
-    reproduced_count = nrow(reproduced),
-    match_rate = length(intersect(original$id, reproduced$id)) / max(nrow(original), 1)
-  )
-},
-
-get_pkg_versions = function() {
-  installed_packages <- installed.packages()
-  relevant_packages <- c("searchAnalyzeR", "dplyr", "ggplot2", "stringr")
-
-  versions <- sapply(relevant_packages, function(pkg) {
-    if (pkg %in% rownames(installed_packages)) {
-      as.character(packageVersion(pkg))
-    } else {
-      "Not installed"
+    calculate_data_checksum = function(data) {
+      # Calculate checksum of the data
+      digest::digest(data, algo = "md5")
     }
-  })
-
-  return(versions)
-},
-
-get_git_commit = function() {
-  # Try to get git commit hash
-  tryCatch({
-    system("git rev-parse HEAD", intern = TRUE)
-  }, error = function(e) {
-    "Git not available or not a git repository"
-  })
-},
-
-calculate_data_checksum = function(data) {
-  # Calculate checksum of the data
-  digest::digest(data, algo = "md5")
-}
   )
 )

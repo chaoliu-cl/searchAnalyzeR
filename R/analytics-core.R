@@ -25,29 +25,6 @@
 #'   \item{\code{visualize_performance(type)}}{Generate performance visualizations}
 #' }
 #'
-#' @examples
-#' # Initialize with search results
-#' search_data <- data.frame(
-#'   id = paste0("art", 1:100),
-#'   title = paste("Article", 1:100),
-#'   abstract = paste("Abstract for article", 1:100),
-#'   source = "PubMed",
-#'   date = Sys.Date() - sample(1:365, 100, replace = TRUE)
-#' )
-#'
-#' gold_standard <- paste0("art", sample(1:100, 20))
-#'
-#' analyzer <- SearchAnalyzer$new(
-#'   search_results = search_data,
-#'   gold_standard = gold_standard
-#' )
-#'
-#' # Calculate metrics
-#' metrics <- analyzer$calculate_metrics()
-#'
-#' # Generate overview plot
-#' overview_plot <- analyzer$visualize_performance("overview")
-#'
 #' @export
 SearchAnalyzer <- R6::R6Class(
   "SearchAnalyzer",
@@ -211,22 +188,24 @@ SearchAnalyzer <- R6::R6Class(
         # Create basic plot without performance metrics
         basic_metrics <- private$calculate_basic_metrics()
 
-        overview_data <- tibble(
+        # Using base R data.frame instead of tibble
+        overview_data <- data.frame(
           metric = c("Total Records", "Unique Records", "Sources"),
           value = c(basic_metrics$total_records / max(basic_metrics$total_records, 1),
                     basic_metrics$unique_records / max(basic_metrics$total_records, 1),
                     basic_metrics$sources / 10), # Normalize to 0-1 scale
-          category = c("Count", "Count", "Diversity")
+          category = c("Count", "Count", "Diversity"),
+          stringsAsFactors = FALSE
         )
 
-        ggplot(overview_data, aes(x = metric, y = value, fill = category)) +
-          geom_col(alpha = 0.8) +
-          geom_text(aes(label = sprintf("%.2f", value)), vjust = -0.5) +
-          labs(title = "Search Results Overview",
-               subtitle = "Basic statistics (no gold standard provided)",
-               x = "Metrics", y = "Normalized Score") +
-          theme_minimal() +
-          ylim(0, 1)
+        ggplot2::ggplot(overview_data, ggplot2::aes(x = .data$metric, y = .data$value, fill = .data$category)) +
+          ggplot2::geom_col(alpha = 0.8) +
+          ggplot2::geom_text(ggplot2::aes(label = sprintf("%.2f", .data$value)), vjust = -0.5) +
+          ggplot2::labs(title = "Search Results Overview",
+                        subtitle = "Basic statistics (no gold standard provided)",
+                        x = "Metrics", y = "Normalized Score") +
+          ggplot2::theme_minimal() +
+          ggplot2::ylim(0, 1)
       } else {
         # Use the full plot_overview function
         metrics <- self$calculate_metrics()
@@ -237,11 +216,11 @@ SearchAnalyzer <- R6::R6Class(
     plot_pr_curve = function() {
       if (is.null(self$gold_standard)) {
         # Create placeholder plot
-        ggplot() +
-          geom_text(aes(x = 0.5, y = 0.5), label = "No gold standard provided\nfor precision-recall analysis") +
-          xlim(0, 1) + ylim(0, 1) +
-          labs(title = "Precision-Recall Curve", x = "Recall", y = "Precision") +
-          theme_minimal()
+        ggplot2::ggplot() +
+          ggplot2::geom_text(ggplot2::aes(x = 0.5, y = 0.5), label = "No gold standard provided\nfor precision-recall analysis") +
+          ggplot2::xlim(0, 1) + ggplot2::ylim(0, 1) +
+          ggplot2::labs(title = "Precision-Recall Curve", x = "Recall", y = "Precision") +
+          ggplot2::theme_minimal()
       } else {
         plot_pr_curve(self$search_results$id, self$gold_standard)
       }
@@ -256,23 +235,23 @@ SearchAnalyzer <- R6::R6Class(
         results_by_db <- split(self$search_results$id, self$search_results$search_source)
         plot_db_performance(results_by_db, self$gold_standard)
       } else {
-        ggplot() +
-          geom_text(aes(x = 0.5, y = 0.5), label = "No database source information available") +
-          xlim(0, 1) + ylim(0, 1) +
-          labs(title = "Database Performance Comparison") +
-          theme_minimal()
+        ggplot2::ggplot() +
+          ggplot2::geom_text(ggplot2::aes(x = 0.5, y = 0.5), label = "No database source information available") +
+          ggplot2::xlim(0, 1) + ggplot2::ylim(0, 1) +
+          ggplot2::labs(title = "Database Performance Comparison") +
+          ggplot2::theme_minimal()
       }
     },
 
     plot_keyword_analysis = function() {
       if (!is.null(self$metadata$search_terms)) {
-        plot_keyword_effectiveness(self$search_results, self$metadata$search_terms, self$gold_standard)
+        plot_keyword_eff(self$search_results, self$metadata$search_terms, self$gold_standard)
       } else {
-        ggplot() +
-          geom_text(aes(x = 0.5, y = 0.5), label = "No search terms available for analysis") +
-          xlim(0, 1) + ylim(0, 1) +
-          labs(title = "Keyword Effectiveness Analysis") +
-          theme_minimal()
+        ggplot2::ggplot() +
+          ggplot2::geom_text(ggplot2::aes(x = 0.5, y = 0.5), label = "No search terms available for analysis") +
+          ggplot2::xlim(0, 1) + ggplot2::ylim(0, 1) +
+          ggplot2::labs(title = "Keyword Effectiveness Analysis") +
+          ggplot2::theme_minimal()
       }
     }
   )
