@@ -5,7 +5,7 @@
 
 <!-- badges: start -->
 
-[![R-CMD-check](https://github.com/chaoliu-cl/searchAnalyzeR/workflows/R-CMD-check/badge.svg)](https://github.com/chaoliu-cl/searchAnalyzeR/actions/workflows/R-CMD-check.yaml)
+[![R-CMD-check](https://github.com/chaoliu-cl/searchAnalyzeR/actions/workflows/r.yml/badge.svg)](https://github.com/chaoliu-cl/searchAnalyzeR/actions/workflows/r.yml)
 [![CRAN
 status](https://www.r-pkg.org/badges/version/searchAnalyzeR)](https://CRAN.R-project.org/package=searchAnalyzeR)
 [![Lifecycle:
@@ -20,14 +20,14 @@ reports.
 
 ## Key Features
 
-- 🔍 **PudMed-database API search integration**
+- 🔍 **PubMed database API search integration**
 - 📊 **Performance metrics calculation** (precision, recall, F1-score,
   efficiency measures)
 - 🎯 **Search strategy optimization** with term effectiveness analysis
 - 📈 **Rich visualizations** for search performance and temporal
   coverage
 - 📋 **PRISMA-compliant reporting** with flow diagrams
-- 🔄 **Reproducibility tools** for transparent research
+- 📄 **Reproducibility tools** for transparent research
 - ✅ **Benchmark validation** across multiple domains
 - 🧹 **Duplicate detection** with multiple algorithms
 - 📤 **Multi-format exports** (CSV, Excel, RIS, BibTeX, EndNote)
