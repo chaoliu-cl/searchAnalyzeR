@@ -8,40 +8,35 @@
 #' @param metrics List of calculated metrics from SearchAnalyzer
 #' @return ggplot object showing key performance indicators
 #' @details
-#' Creates a comprehensive overview plot displaying:
+#' Creates a focused overview plot displaying the core search performance metrics:
 #' \itemize{
-#'   \item Precision, Recall, and F1 Score (Accuracy category)
-#'   \item Coverage metrics (Completeness category)
-#'   \item Efficiency scores (Efficiency category)
+#'   \item Precision: Proportion of retrieved articles that are relevant
+#'   \item Recall: Proportion of relevant articles that were retrieved
+#'   \item F1 Score: Harmonic mean of precision and recall
 #' }
-#' The plot uses color coding to distinguish between metric categories and
+#' The plot uses color coding to distinguish between metric types and
 #' displays exact values on top of each bar.
 #' @examples
 #' # Assume you have calculated metrics
 #' metrics <- list(
-#'   precision_recall = list(precision = 0.8, recall = 0.6, f1_score = 0.69),
-#'   coverage = list(total_coverage = 0.75),
-#'   efficiency = list(efficiency_score = 0.45)
+#'   precision_recall = list(precision = 0.8, recall = 0.6, f1_score = 0.69)
 #' )
 #'
 #' overview_plot <- plot_overview(metrics)
 #' print(overview_plot)
 #' @import ggplot2
-#' @importFrom dplyr %>%
 #' @seealso \code{\link{plot_pr_curve}}, \code{\link{plot_temporal}}
 #' @export
 plot_overview <- function(metrics) {
-  # Extract key metrics for overview - using base R data.frame instead of tibble
+  # Extract key metrics for overview - focus on core precision/recall metrics only
   overview_data <- data.frame(
-    metric = c("Precision", "Recall", "F1 Score", "Coverage", "Efficiency"),
+    metric = c("Precision", "Recall", "F1 Score"),
     value = c(
       metrics$precision_recall$precision,
       metrics$precision_recall$recall,
-      metrics$precision_recall$f1_score,
-      metrics$coverage$total_coverage,
-      metrics$efficiency$efficiency_score
+      metrics$precision_recall$f1_score
     ),
-    category = c("Accuracy", "Accuracy", "Accuracy", "Completeness", "Efficiency"),
+    category = c("Precision", "Recall", "F1 Score"),
     stringsAsFactors = FALSE
   )
 
@@ -49,21 +44,21 @@ plot_overview <- function(metrics) {
     ggplot2::geom_col(alpha = 0.8) +
     ggplot2::geom_text(ggplot2::aes(label = sprintf("%.3f", .data$value)),
                        vjust = -0.5, size = 3.5) +
-    ggplot2::scale_fill_manual(values = c("Accuracy" = "#2E86AB",
-                                          "Completeness" = "#A23B72",
-                                          "Efficiency" = "#F18F01")) +
+    ggplot2::scale_fill_manual(values = c("Precision" = "#2E86AB",
+                                          "Recall" = "#A23B72",
+                                          "F1 Score" = "#F18F01")) +
     ggplot2::labs(
       title = "Search Strategy Performance Overview",
-      subtitle = "Key performance metrics across different dimensions",
+      subtitle = "Core performance metrics for systematic review search",
       x = "Metrics",
       y = "Score",
-      fill = "Category"
+      fill = "Metric Type"
     ) +
     ggplot2::theme_minimal() +
     ggplot2::theme(
       plot.title = ggplot2::element_text(size = 14, face = "bold"),
       plot.subtitle = ggplot2::element_text(size = 12, color = "gray60"),
-      axis.text.x = ggplot2::element_text(angle = 45, hjust = 1),
+      axis.text.x = ggplot2::element_text(angle = 0, hjust = 0.5),  # Keep horizontal for better readability with 3 bars
       legend.position = "bottom"
     ) +
     ggplot2::ylim(0, 1)

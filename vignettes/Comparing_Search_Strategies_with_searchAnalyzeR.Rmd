@@ -1,0 +1,728 @@
+---
+title: "Comparing Search Strategies: A Comprehensive Guide"
+author: "searchAnalyzeR Package"
+date: "`r Sys.Date()`"
+output: 
+  rmarkdown::html_vignette:
+    toc: true
+    toc_depth: 3
+    fig_width: 8
+    fig_height: 6
+vignette: >
+  %\VignetteIndexEntry{Comparing Search Strategies: A Comprehensive Guide}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.width = 8,
+  fig.height = 6,
+  warning = FALSE,
+  message = FALSE
+)
+```
+
+## Introduction
+
+This vignette demonstrates how to use the searchAnalyzeR package to compare different search strategies for systematic reviews. We'll walk through a comprehensive example comparing two complementary approaches for COVID-19 research: a broad strategy capturing general research across all domains versus a targeted strategy focusing on high-quality clinical evidence.
+
+### Learning Objectives
+
+By the end of this vignette, you will be able to:
+
+- Design and implement different search strategies
+- Perform statistical comparisons between strategies
+- Analyze individual term effectiveness
+- Generate comprehensive visualizations
+- Make evidence-based recommendations for strategy selection
+
+### Why Compare Search Strategies?
+
+Different search strategies serve different purposes in systematic reviews:
+
+- **Broad strategies** maximize recall but may reduce precision
+- **Targeted strategies** increase precision but may miss relevant studies
+- **Combined strategies** can leverage the strengths of both approaches
+
+Understanding these trade-offs helps researchers select optimal search approaches for their specific needs.
+
+## Setup and Package Loading
+
+```{r libraries}
+library(searchAnalyzeR)
+library(ggplot2)
+
+# Load additional packages for enhanced visualizations
+if (requireNamespace("patchwork", quietly = TRUE)) {
+  library(patchwork)
+}
+```
+
+## Defining Search Strategies
+
+We'll compare two strategically different approaches for COVID-19 research that demonstrate clear trade-offs between precision and recall.
+
+### Strategy A: Broad COVID Research Strategy
+
+This strategy uses general terms to capture COVID-19 research across all domains.
+
+```{r strategy_a}
+strategy_A <- list(
+  name = "Broad COVID Research Strategy",
+  terms = c(
+    "covid-19",
+    "coronavirus", 
+    "sars-cov-2",
+    "pandemic",
+    "covid"
+  ),
+  description = "Broad approach capturing general COVID-19 research across all domains",
+  databases = c("PubMed"),
+  date_range = as.Date(c("2020-01-01", "2024-12-31")),
+  filters = list(
+    language = "English",
+    article_types = c("Journal Article", "Review", "Clinical Trial")
+  ),
+  search_date = Sys.time()
+)
+
+cat("Strategy A (Broad COVID Research):\n")
+cat("Terms:", paste(strategy_A$terms, collapse = " OR "), "\n")
+cat("Description:", strategy_A$description, "\n")
+```
+
+### Strategy B: Targeted Clinical COVID Strategy
+
+This strategy focuses specifically on high-quality clinical evidence.
+
+```{r strategy_b}
+strategy_B <- list(
+  name = "Targeted Clinical COVID Strategy", 
+  terms = c(
+    "covid-19 clinical trial",
+    "covid-19 randomized controlled trial",
+    "covid-19 systematic review",
+    "covid-19 vaccine efficacy",
+    "covid-19 treatment outcomes"
+  ),
+  description = "Targeted approach focusing on high-quality clinical evidence",
+  databases = c("PubMed"),
+  date_range = as.Date(c("2020-01-01", "2024-12-31")),
+  filters = list(
+    language = "English", 
+    article_types = c("Journal Article", "Review", "Clinical Trial")
+  ),
+  search_date = Sys.time()
+)
+
+cat("Strategy B (Targeted Clinical COVID):\n")
+cat("Terms:", paste(strategy_B$terms, collapse = " OR "), "\n")
+cat("Description:", strategy_B$description, "\n")
+```
+
+## Executing the Searches
+
+Now we'll execute both search strategies and retrieve articles from PubMed.
+
+```{r execute_searches}
+# Execute Strategy A
+cat("=== EXECUTING STRATEGY A: Broad COVID Research ===\n")
+results_A <- search_pubmed(
+  search_terms = strategy_A$terms,
+  max_results = 200,
+  date_range = strategy_A$date_range
+)
+
+cat("Strategy A completed. Retrieved", nrow(results_A), "articles.\n\n")
+
+# Execute Strategy B  
+cat("=== EXECUTING STRATEGY B: Targeted Clinical COVID ===\n")
+results_B <- search_pubmed(
+  search_terms = strategy_B$terms,
+  max_results = 200,
+  date_range = strategy_B$date_range
+)
+
+cat("Strategy B completed. Retrieved", nrow(results_B), "articles.\n")
+```
+
+## Data Processing and Standardization
+
+Before analysis, we need to standardize the search results and remove duplicates.
+
+```{r process_data}
+# Standardize both result sets
+cat("Standardizing search results...\n")
+standardized_A <- std_search_results(results_A, source_format = "pubmed")
+standardized_B <- std_search_results(results_B, source_format = "pubmed")
+
+# Add strategy identifiers
+standardized_A$strategy <- "Broad_COVID_Research"
+standardized_B$strategy <- "Targeted_Clinical_COVID"
+
+# Detect duplicates within each strategy
+dedup_A <- detect_dupes(standardized_A, method = "exact")
+dedup_B <- detect_dupes(standardized_B, method = "exact")
+
+# Report deduplication results
+cat("Strategy A - Total:", nrow(dedup_A), 
+    "Unique:", sum(!dedup_A$duplicate), 
+    "Duplicates:", sum(dedup_A$duplicate), "\n")
+cat("Strategy B - Total:", nrow(dedup_B), 
+    "Unique:", sum(!dedup_B$duplicate), 
+    "Duplicates:", sum(dedup_B$duplicate), "\n")
+```
+
+## Creating a Gold Standard
+
+For demonstration purposes, we'll create an enhanced gold standard using high-confidence indicators of research quality.
+
+```{r create_gold_standard}
+# Filter out duplicates for analysis
+unique_A <- dedup_A[!dedup_A$duplicate, ]
+unique_B <- dedup_B[!dedup_B$duplicate, ]
+
+# High-confidence terms that indicate quality COVID research
+high_confidence_patterns <- c(
+  "randomized", "controlled trial", "systematic review", "meta-analysis",
+  "clinical trial", "vaccine efficacy", "treatment outcome", "placebo",
+  "double-blind", "multicenter", "cohort study", "case-control"
+)
+
+# Function to count high-confidence patterns
+count_patterns <- function(data, patterns) {
+  combined_text <- tolower(paste(data$title, data$abstract, sep = " "))
+  sapply(combined_text, function(text) {
+    sum(sapply(patterns, function(pattern) grepl(pattern, text, fixed = TRUE)))
+  })
+}
+
+# Articles that appear in both strategies (high confidence due to overlap)
+overlap_ids <- intersect(unique_A$id, unique_B$id)
+
+# Articles with multiple high-confidence patterns
+pattern_counts_A <- count_patterns(unique_A, high_confidence_patterns)
+pattern_counts_B <- count_patterns(unique_B, high_confidence_patterns)
+
+multi_pattern_A <- unique_A$id[pattern_counts_A >= 2]
+multi_pattern_B <- unique_B$id[pattern_counts_B >= 2]
+
+# Articles with "systematic review" or "meta-analysis" in title
+systematic_review_pattern <- "systematic review|meta-analysis"
+systematic_A <- unique_A$id[grepl(systematic_review_pattern, tolower(unique_A$title))]
+systematic_B <- unique_B$id[grepl(systematic_review_pattern, tolower(unique_B$title))]
+
+# Combine for gold standard
+gold_standard_ids <- unique(c(
+  overlap_ids,      # High confidence: found by both strategies
+  systematic_A,     # Very high confidence: systematic reviews from A
+  systematic_B,     # Very high confidence: systematic reviews from B  
+  multi_pattern_A,  # High confidence: multiple quality indicators from A
+  multi_pattern_B   # High confidence: multiple quality indicators from B
+))
+
+cat("Gold standard created with", length(gold_standard_ids), "high-confidence relevant articles\n")
+cat("- Overlap between strategies:", length(overlap_ids), "articles\n")
+cat("- Systematic reviews Strategy A:", length(systematic_A), "articles\n")
+cat("- Systematic reviews Strategy B:", length(systematic_B), "articles\n")
+```
+
+## Performance Analysis
+
+Now we'll analyze the performance of both strategies using the SearchAnalyzer class.
+
+```{r performance_analysis}
+# Initialize analyzers for both strategies
+unique_A_ids <- unique_A$id
+unique_B_ids <- unique_B$id
+
+analyzer_A <- SearchAnalyzer$new(
+  search_results = unique_A,
+  gold_standard = gold_standard_ids,
+  search_strategy = strategy_A
+)
+
+analyzer_B <- SearchAnalyzer$new(
+  search_results = unique_B,
+  gold_standard = gold_standard_ids,
+  search_strategy = strategy_B
+)
+
+# Calculate comprehensive metrics
+metrics_A <- analyzer_A$calculate_metrics()
+metrics_B <- analyzer_B$calculate_metrics()
+
+# Display key metrics
+cat("STRATEGY A (Broad COVID Research) PERFORMANCE:\n")
+cat("Total Articles Retrieved:", nrow(unique_A), "\n")
+cat("Precision:", round(metrics_A$precision_recall$precision, 3), "\n")
+cat("Recall:", round(metrics_A$precision_recall$recall, 3), "\n")
+cat("F1 Score:", round(metrics_A$precision_recall$f1_score, 3), "\n")
+
+cat("\nSTRATEGY B (Targeted Clinical COVID) PERFORMANCE:\n")
+cat("Total Articles Retrieved:", nrow(unique_B), "\n")
+cat("Precision:", round(metrics_B$precision_recall$precision, 3), "\n")
+cat("Recall:", round(metrics_B$precision_recall$recall, 3), "\n")
+cat("F1 Score:", round(metrics_B$precision_recall$f1_score, 3), "\n")
+```
+
+## Statistical Comparison
+
+We'll perform statistical testing to determine if the differences between strategies are significant.
+
+```{r statistical_comparison}
+# Compare strategies using McNemar's test
+comparison_result <- compare_strategies(
+  strategy1_results = unique_A_ids,
+  strategy2_results = unique_B_ids,
+  gold_standard = gold_standard_ids,
+  test_type = "mcnemar"
+)
+
+cat("STATISTICAL COMPARISON RESULTS:\n")
+cat("Test Used:", comparison_result$test, "\n")
+cat("P-value:", round(comparison_result$p_value, 4), "\n")
+cat("Statistically Significant:", comparison_result$significant, "\n")
+
+if (!is.null(comparison_result$difference)) {
+  cat("\nPERFORMANCE DIFFERENCES (B - A):\n")
+  cat("Precision Difference:", round(comparison_result$difference$precision_diff, 3), "\n")
+  cat("Recall Difference:", round(comparison_result$difference$recall_diff, 3), "\n")
+  cat("F1 Score Difference:", round(comparison_result$difference$f1_diff, 3), "\n")
+}
+```
+
+## Strategy Complementarity Analysis
+
+Let's analyze how well the strategies complement each other.
+
+```{r complementarity_analysis}
+# Calculate detailed strategy comparison metrics
+strategy_comparison <- calc_strategy_comparison(
+  strategy1_results = unique_A_ids,
+  strategy2_results = unique_B_ids,
+  gold_standard = gold_standard_ids
+)
+
+cat("ENHANCED OVERLAP ANALYSIS:\n")
+cat("Total Unique Articles (Combined):", strategy_comparison$overlap_analysis$total_unique, "\n")
+cat("Overlap Between Strategies:", strategy_comparison$overlap_analysis$overlap_count, "\n")
+cat("Unique to Strategy A (Broad):", strategy_comparison$overlap_analysis$unique_to_strategy1, "\n")
+cat("Unique to Strategy B (Targeted):", strategy_comparison$overlap_analysis$unique_to_strategy2, "\n")
+cat("Overlap Percentage:", round(strategy_comparison$overlap_analysis$overlap_percentage, 1), "%\n")
+
+cat("\nCOMPLEMENTARITY ANALYSIS:\n")
+cat("Added Recall by Strategy A:", round(strategy_comparison$complementarity$added_recall_by_strategy1, 3), "\n")
+cat("Added Recall by Strategy B:", round(strategy_comparison$complementarity$added_recall_by_strategy2, 3), "\n")
+cat("Synergy Score:", round(strategy_comparison$complementarity$synergy_score, 3), "\n")
+```
+
+## Temporal Coverage Analysis
+
+We'll examine how well each strategy covers different time periods.
+
+```{r temporal_analysis}
+# Calculate temporal coverage for both strategies
+temporal_A <- calc_temporal_coverage(unique_A, target_date_range = strategy_A$date_range)
+temporal_B <- calc_temporal_coverage(unique_B, target_date_range = strategy_B$date_range)
+
+cat("TEMPORAL COVERAGE ANALYSIS:\n")
+cat("Strategy A - Target Period Coverage:", round(temporal_A$target_period_coverage * 100, 1), "%\n")
+cat("Strategy B - Target Period Coverage:", round(temporal_B$target_period_coverage * 100, 1), "%\n")
+
+if (length(temporal_A$peak_years) > 0) {
+  cat("Strategy A - Peak Publication Years:", paste(temporal_A$peak_years, collapse = ", "), "\n")
+}
+if (length(temporal_B$peak_years) > 0) {
+  cat("Strategy B - Peak Publication Years:", paste(temporal_B$peak_years, collapse = ", "), "\n")
+}
+```
+
+## Performance Visualization
+
+Now let's create comprehensive visualizations to compare the strategies.
+
+### Overall Performance Comparison
+
+```{r performance_plots, fig.width=10, fig.height=6}
+# Side-by-side performance overview
+overview_A <- analyzer_A$visualize_performance("overview") +
+  ggtitle("Strategy A: Broad COVID Research") +
+  theme(plot.title = element_text(size = 12)) +
+  ylim(0, 1)
+
+overview_B <- analyzer_B$visualize_performance("overview") +
+  ggtitle("Strategy B: Targeted Clinical COVID") +
+  theme(plot.title = element_text(size = 12)) +
+  ylim(0, 1)
+
+if (requireNamespace("patchwork", quietly = TRUE)) {
+  combined_overview <- overview_A + overview_B +
+    plot_annotation(title = "COVID Search Strategy Performance Comparison",
+                    subtitle = "Broad vs. Targeted Clinical Approaches")
+  print(combined_overview)
+} else {
+  print(overview_A)
+  print(overview_B)
+}
+```
+
+### Direct Metric Comparison
+
+```{r metric_comparison_plot, fig.width=8, fig.height=6}
+# Create direct comparison plot
+comparison_data <- data.frame(
+  Strategy = c("Broad COVID Research", "Targeted Clinical COVID"),
+  Precision = c(metrics_A$precision_recall$precision, metrics_B$precision_recall$precision),
+  Recall = c(metrics_A$precision_recall$recall, metrics_B$precision_recall$recall),
+  F1_Score = c(metrics_A$precision_recall$f1_score, metrics_B$precision_recall$f1_score),
+  stringsAsFactors = FALSE
+)
+
+# Reshape for plotting
+comparison_long <- rbind(
+  data.frame(Strategy = comparison_data$Strategy, Metric = "Precision", Value = comparison_data$Precision),
+  data.frame(Strategy = comparison_data$Strategy, Metric = "Recall", Value = comparison_data$Recall),
+  data.frame(Strategy = comparison_data$Strategy, Metric = "F1_Score", Value = comparison_data$F1_Score)
+)
+
+comparison_plot <- ggplot(comparison_long, aes(x = Metric, y = Value, fill = Strategy)) +
+  geom_col(position = "dodge", alpha = 0.8, width = 0.7) +
+  geom_text(aes(label = round(Value, 3)), position = position_dodge(width = 0.7), vjust = -0.5) +
+  scale_fill_manual(values = c("Broad COVID Research" = "#2E86AB", "Targeted Clinical COVID" = "#A23B72")) +
+  labs(title = "Direct Performance Metric Comparison",
+       subtitle = "Trade-offs: Broad strategy shows higher recall, Targeted shows higher precision",
+       y = "Score", x = "Performance Metric") +
+  theme_minimal() +
+  theme(legend.position = "bottom") +
+  ylim(0, 1)
+
+print(comparison_plot)
+```
+
+### Overlap Analysis Visualization
+
+```{r overlap_plot, fig.width=8, fig.height=6}
+# Create overlap visualization
+overlap_data <- data.frame(
+  Category = c("Broad Strategy Only", "Overlap", "Targeted Strategy Only"),
+  Count = c(strategy_comparison$overlap_analysis$unique_to_strategy1,
+            strategy_comparison$overlap_analysis$overlap_count,
+            strategy_comparison$overlap_analysis$unique_to_strategy2),
+  stringsAsFactors = FALSE
+)
+
+overlap_data$Percentage <- overlap_data$Count / strategy_comparison$overlap_analysis$total_unique * 100
+
+overlap_plot <- ggplot(overlap_data, aes(x = Category, y = Count, fill = Category)) +
+  geom_col(alpha = 0.8, width = 0.7) +
+  geom_text(aes(label = paste0(Count, "\n(", round(Percentage, 1), "%)")), vjust = 0.5, size = 3.5) +
+  scale_fill_manual(values = c("Broad Strategy Only" = "#2E86AB",
+                               "Overlap" = "#F18F01", 
+                               "Targeted Strategy Only" = "#A23B72")) +
+  labs(title = "Article Retrieval Overlap Analysis",
+       subtitle = "Complementary nature of broad vs. targeted approaches",
+       y = "Number of Articles", x = "Category") +
+  theme_minimal() +
+  theme(legend.position = "none",
+        axis.text.x = element_text(angle = 45, hjust = 1))
+
+print(overlap_plot)
+```
+
+### Temporal Distribution Comparison
+
+```{r temporal_plots, fig.width=12, fig.height=6}
+# Temporal comparison
+temporal_A_plot <- analyzer_A$visualize_performance("temporal") +
+  ggtitle("Strategy A: Temporal Distribution") +
+  theme(plot.title = element_text(size = 12))
+
+temporal_B_plot <- analyzer_B$visualize_performance("temporal") +
+  ggtitle("Strategy B: Temporal Distribution") +
+  theme(plot.title = element_text(size = 12))
+
+if (requireNamespace("patchwork", quietly = TRUE)) {
+  combined_temporal <- temporal_A_plot + temporal_B_plot +
+    plot_annotation(title = "Temporal Distribution Comparison")
+  print(combined_temporal)
+} else {
+  print(temporal_A_plot)
+  print(temporal_B_plot)
+}
+```
+
+## Term Effectiveness Analysis
+
+Let's analyze the effectiveness of individual search terms within each strategy.
+
+```{r term_effectiveness}
+# Analyze terms from Strategy A
+term_analysis_A <- term_effectiveness(
+  terms = strategy_A$terms,
+  search_results = unique_A,
+  gold_standard = gold_standard_ids,
+  text_fields = c("title", "abstract")
+)
+
+# Analyze terms from Strategy B
+term_analysis_B <- term_effectiveness(
+  terms = strategy_B$terms,
+  search_results = unique_B,
+  gold_standard = gold_standard_ids,
+  text_fields = c("title", "abstract")
+)
+
+# Calculate Term Effectiveness Scores (TES)
+term_analysis_A <- calc_tes(term_analysis_A)
+term_analysis_B <- calc_tes(term_analysis_B)
+
+cat("Term Effectiveness for Strategy A (Broad COVID Research):\n")
+print(term_analysis_A[, c("term", "precision", "coverage", "tes")])
+
+cat("\nTerm Effectiveness for Strategy B (Targeted Clinical COVID):\n") 
+print(term_analysis_B[, c("term", "precision", "coverage", "tes")])
+```
+
+### Term Effectiveness Visualizations
+
+```{r term_plots, fig.width=11, fig.height=8}
+# Find top terms for both strategies
+top_results_A <- find_top_terms(term_analysis_A, n = 3, plot = FALSE)
+top_results_B <- find_top_terms(term_analysis_B, n = 3, plot = FALSE)
+
+cat("Top performing terms in Strategy A:", paste(top_results_A$terms, collapse = ", "), "\n")
+cat("Top performing terms in Strategy B:", paste(top_results_B$terms, collapse = ", "), "\n")
+
+# Create precision plots for both strategies with better spacing
+precision_plot_A <- plot_term_effectiveness(
+  term_analysis_A,
+  plot_type = "precision_only",
+  title_override = "Strategy A: Term Precision Analysis",
+  show_values = TRUE
+) + theme(
+  plot.margin = margin(20, 20, 20, 20),
+  axis.text.y = element_text(size = 9),
+  plot.title = element_text(size = 11)
+)
+
+precision_plot_B <- plot_term_effectiveness(
+  term_analysis_B,
+  plot_type = "precision_only", 
+  title_override = "Strategy B: Term Precision Analysis",
+  show_values = TRUE
+) + theme(
+  plot.margin = margin(20, 20, 20, 20),
+  axis.text.y = element_text(size = 9),
+  plot.title = element_text(size = 11)
+)
+
+if (requireNamespace("patchwork", quietly = TRUE)) {
+  precision_comparison <- precision_plot_A + precision_plot_B +
+    plot_annotation(
+      title = "Term Precision Comparison Across Strategies",
+      theme = theme(plot.title = element_text(size = 14, hjust = 0.5))
+    )
+  print(precision_comparison)
+} else {
+  print(precision_plot_A)
+  print(precision_plot_B)
+}
+```
+
+```{r bubble_plots, fig.width=12, fig.height=6}
+# Precision vs Coverage bubble plots
+bubble_plot_A <- plot_term_effectiveness(
+  term_analysis_A,
+  plot_type = "precision_coverage",
+  title_override = "Strategy A: Term Effectiveness Landscape",
+  show_values = FALSE
+)
+
+bubble_plot_B <- plot_term_effectiveness(
+  term_analysis_B,
+  plot_type = "precision_coverage", 
+  title_override = "Strategy B: Term Effectiveness Landscape",
+  show_values = FALSE
+)
+
+if (requireNamespace("patchwork", quietly = TRUE)) {
+  bubble_comparison <- bubble_plot_A + bubble_plot_B +
+    plot_annotation(title = "Term Effectiveness Landscape Comparison")
+  print(bubble_comparison)
+} else {
+  print(bubble_plot_A)
+  print(bubble_plot_B)
+}
+```
+
+## Cross-Strategy Term Comparison
+
+```{r cross_strategy_terms}
+# Compare terms across strategies
+term_comparison <- compare_terms(
+  list(
+    "Broad" = term_analysis_A,
+    "Targeted" = term_analysis_B
+  ),
+  top_n = 3
+)
+
+cat("Cross-Strategy Term Effectiveness Comparison:\n")
+print(term_comparison)
+
+# Create TES comparison plot
+top_terms_combined <- unique(c(top_results_A$terms, top_results_B$terms))
+tes_comparison_data <- term_comparison[term_comparison$term %in% top_terms_combined, ]
+
+tes_plot <- ggplot(tes_comparison_data, aes(x = term, y = tes, fill = strategy)) +
+  geom_col(position = "dodge", alpha = 0.8, width = 0.7) +
+  geom_text(aes(label = round(tes, 3)),
+            position = position_dodge(width = 0.7), vjust = -0.5, size = 3) +
+  scale_fill_manual(values = c("Broad" = "#2E86AB", "Targeted" = "#A23B72")) +
+  labs(title = "Term Effectiveness Score (TES) Comparison",
+       subtitle = "Top-performing terms across COVID search strategies",
+       x = "Search Terms", y = "TES Score", fill = "Strategy") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        legend.position = "bottom") +
+  ylim(0, 1)
+
+print(tes_plot)
+```
+
+## Strategic Recommendations
+
+Based on our comprehensive analysis, we can make evidence-based recommendations for different research scenarios.
+
+```{r recommendations}
+# Determine winners by metric
+precision_winner <- ifelse(metrics_A$precision_recall$precision > metrics_B$precision_recall$precision,
+                           "Broad COVID Research (A)", "Targeted Clinical COVID (B)")
+recall_winner <- ifelse(metrics_A$precision_recall$recall > metrics_B$precision_recall$recall,
+                        "Broad COVID Research (A)", "Targeted Clinical COVID (B)")
+f1_winner <- ifelse(metrics_A$precision_recall$f1_score > metrics_B$precision_recall$f1_score,
+                    "Broad COVID Research (A)", "Targeted Clinical COVID (B)")
+
+cat("PERFORMANCE WINNERS BY METRIC:\n")
+cat("Best Precision:", precision_winner, "\n")
+cat("Best Recall:", recall_winner, "\n") 
+cat("Best Overall F1 Score:", f1_winner, "\n\n")
+
+# Strategic recommendations
+cat("USAGE RECOMMENDATIONS:\n")
+cat("• For broad COVID-19 scoping reviews → Use Strategy A (Broad)\n")
+cat("• For clinical intervention reviews → Use Strategy B (Targeted)\n")
+cat("• For comprehensive systematic reviews → Combine both strategies\n")
+cat("• For rapid evidence synthesis → Start with Strategy B, expand with Strategy A if needed\n\n")
+
+# Complementarity assessment
+if (strategy_comparison$overlap_analysis$overlap_percentage < 60) {
+  cat("✓ HIGH COMPLEMENTARITY: Strategies are highly complementary - combining both is recommended\n")
+} else {
+  cat("○ MODERATE OVERLAP: Some redundancy between strategies\n")
+}
+
+if (strategy_comparison$complementarity$synergy_score > 0.15) {
+  cat("✓ STRONG SYNERGY: Combining strategies provides substantial added value\n")
+} else {
+  cat("○ LIMITED SYNERGY: Minimal additional benefit from combining strategies\n")
+}
+```
+
+## Export and Reporting
+
+Finally, let's export our results for further use and create comprehensive reports.
+
+```{r export_results}
+# Create temporary directory for exports
+output_dir <- tempdir()
+
+# Export individual strategy results
+export_files_A <- export_results(
+  search_results = unique_A,
+  file_path = file.path(output_dir, "strategy_A_broad_covid"),
+  formats = c("csv", "xlsx"),
+  include_metadata = TRUE
+)
+
+export_files_B <- export_results(
+  search_results = unique_B,
+  file_path = file.path(output_dir, "strategy_B_targeted_covid"),
+  formats = c("csv", "xlsx"),
+  include_metadata = TRUE
+)
+
+# Create comprehensive data package
+enhanced_analysis_results <- list(
+  metrics_A = metrics_A,
+  metrics_B = metrics_B,
+  comparison = comparison_result,
+  strategy_comparison = strategy_comparison,
+  temporal_A = temporal_A,
+  temporal_B = temporal_B,
+  term_effectiveness_A = term_analysis_A,
+  term_effectiveness_B = term_analysis_B
+)
+
+package_dir <- create_data_package(
+  search_results = rbind(
+    transform(unique_A, search_strategy = "Broad_COVID_Research"),
+    transform(unique_B, search_strategy = "Targeted_Clinical_COVID")
+  ),
+  analysis_results = enhanced_analysis_results,
+  output_dir = output_dir,
+  package_name = "covid_search_strategy_comparison"
+)
+
+cat("Analysis package created at:", package_dir, "\n")
+cat("Individual exports created:\n")
+for (file in c(export_files_A, export_files_B)) {
+  cat("-", file, "\n")
+}
+```
+
+## Summary
+
+This comprehensive example demonstrates the power of the searchAnalyzeR package for comparing search strategies. Key takeaways include:
+
+### Key Findings
+
+1. **Strategy A (Broad COVID Research)**:
+   - Retrieved `r nrow(unique_A)` unique articles
+   - F1 Score: `r round(metrics_A$precision_recall$f1_score, 3)`
+   - Best for: Comprehensive literature reviews, scoping studies
+
+2. **Strategy B (Targeted Clinical COVID)**:
+   - Retrieved `r nrow(unique_B)` unique articles  
+   - F1 Score: `r round(metrics_B$precision_recall$f1_score, 3)`
+   - Best for: Clinical guidelines, systematic reviews of interventions
+
+3. **Complementarity**: 
+   - Total unique articles when combined: `r strategy_comparison$overlap_analysis$total_unique`
+   - Overlap: `r strategy_comparison$overlap_analysis$overlap_count` articles (`r round(strategy_comparison$overlap_analysis$overlap_percentage, 1)`%)
+   - Synergy Score: `r round(strategy_comparison$complementarity$synergy_score, 3)`
+
+### Package Features Demonstrated
+
+- **Comparative strategy analysis** with statistical testing
+- **Individual term effectiveness scoring** (TES) 
+- **Overlap and complementarity analysis**
+- **Temporal coverage assessment**
+- **Enhanced visualization suite**
+- **Strategic decision support**
+- **Comprehensive reporting and export capabilities**
+
+### Next Steps
+
+Users can adapt this workflow to:
+
+- Compare their own search strategies
+- Optimize search terms based on effectiveness metrics
+- Make evidence-based decisions about strategy combinations
+- Generate comprehensive reports for systematic review protocols
+
+The searchAnalyzeR package provides a robust framework for evidence-based search strategy development and optimization in systematic reviews.

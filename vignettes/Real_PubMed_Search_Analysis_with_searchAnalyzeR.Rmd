@@ -1,9 +1,54 @@
-# Real PubMed Search Example using searchAnalyzeR Package
-# Systematic Review Search Strategy for COVID-19 Long-term Effects
-#
-# This example demonstrates searching PubMed for real articles and analyzing
-# the search strategy performance using searchAnalyzeR functions.
+---
+title: "Real PubMed Search Analysis with searchAnalyzeR"
+subtitle: "A Comprehensive Example Using COVID-19 Long-term Effects"
+author: "searchAnalyzeR Development Team"
+date: "`r Sys.Date()`"
+output: 
+  rmarkdown::html_vignette:
+    toc: true
+    toc_depth: 3
+    number_sections: true
+vignette: >
+  %\VignetteIndexEntry{Real PubMed Search Analysis with searchAnalyzeR}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
 
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.width = 3,
+  fig.height = 3,
+  eval = TRUE  
+)
+```
+
+# Introduction
+
+This vignette demonstrates how to use the `searchAnalyzeR` package to conduct a comprehensive analysis of systematic review search strategies using real PubMed data. We'll walk through a complete workflow for analyzing search performance, from executing searches to generating publication-ready reports.
+
+The `searchAnalyzeR` package provides tools for:
+
+- **Search execution and standardization** across multiple databases
+- **Duplicate detection and removal** using sophisticated algorithms
+- **Performance metric calculation** including precision, recall, and F1 scores
+- **Visualization generation** for search strategy assessment
+- **Export capabilities** in multiple formats (CSV, Excel, RIS)
+- **PRISMA diagram creation** for systematic review reporting
+- **Term effectiveness analysis** to optimize search strategies
+
+## Case Study: COVID-19 Long-term Effects
+
+For this demonstration, we'll analyze a search strategy designed to identify literature on the long-term effects of COVID-19, commonly known as "Long COVID." This topic represents a rapidly evolving area of research that presents typical challenges faced in systematic reviews.
+
+# Getting Started
+
+## Required Packages
+
+First, let's load the required packages for our analysis:
+
+```{r load-packages, message=FALSE, warning=FALSE}
 # Load required packages
 library(searchAnalyzeR)
 library(rentrez)  # For PubMed API access
@@ -12,11 +57,16 @@ library(dplyr)
 library(ggplot2)
 library(lubridate)
 
-# Set up the analysis
 cat("=== searchAnalyzeR: Real PubMed Search Example ===\n")
 cat("Topic: Long-term effects of COVID-19 (Long COVID)\n")
 cat("Objective: Demonstrate search strategy analysis with real data\n\n")
+```
 
+## Defining the Search Strategy
+
+A well-defined search strategy is crucial for systematic reviews. Here we define our search parameters including terms, databases, date ranges, and filters:
+
+```{r define-strategy}
 # Define our search strategy
 search_strategy <- list(
   terms = c(
@@ -38,7 +88,22 @@ search_strategy <- list(
 cat("Search Strategy:\n")
 cat("Terms:", paste(search_strategy$terms, collapse = " OR "), "\n")
 cat("Date range:", paste(search_strategy$date_range, collapse = " to "), "\n\n")
+```
 
+The search strategy includes:
+
+- **Search terms**: A comprehensive list of synonyms and related terms for Long COVID
+- **Date range**: Covering the period from the start of the pandemic through 2024
+- **Language filter**: English language publications only
+- **Article types**: Focusing on primary research, reviews, and clinical trials
+
+# Executing the Search
+
+## PubMed Search
+
+The `searchAnalyzeR` package provides convenient functions to search PubMed and retrieve article metadata:
+
+```{r execute-search}
 # Execute the search using the package function
 cat("Searching PubMed for real articles...\n")
 raw_results <- search_pubmed(
@@ -49,11 +114,32 @@ raw_results <- search_pubmed(
 )
 
 cat("\nRaw search completed. Retrieved", nrow(raw_results), "articles.\n")
+```
 
+## Data Standardization
+
+Raw search results from different databases often have varying formats. The `std_search_results()` function standardizes the data structure:
+
+```{r standardize-results}
 # Standardize the results using searchAnalyzeR functions
 cat("\nStandardizing search results...\n")
 standardized_results <- std_search_results(raw_results, source_format = "pubmed")
+```
 
+This standardization ensures that:
+
+- Field names are consistent across different data sources
+- Date formats are properly parsed
+- Missing values are handled appropriately
+- Data types are correctly assigned
+
+# Data Quality Assessment
+
+## Duplicate Detection
+
+Duplicate detection is critical in systematic reviews, especially when searching multiple databases. The package provides sophisticated algorithms for identifying duplicates:
+
+```{r duplicate-detection}
 # Detect and remove duplicates
 cat("Detecting duplicates...\n")
 dedup_results <- detect_dupes(standardized_results, method = "exact")
@@ -62,14 +148,35 @@ cat("Duplicate detection complete:\n")
 cat("- Total articles:", nrow(dedup_results), "\n")
 cat("- Unique articles:", sum(!dedup_results$duplicate), "\n")
 cat("- Duplicates found:", sum(dedup_results$duplicate), "\n\n")
+```
 
+The `detect_dupes()` function offers several methods:
+
+- **exact**: Matches identical titles and authors
+- **fuzzy**: Uses string similarity algorithms
+- **doi**: Matches based on Digital Object Identifiers
+- **combined**: Uses multiple criteria for robust detection
+
+## Search Statistics
+
+Basic statistics help assess the overall quality of the search results:
+
+```{r search-stats}
 # Calculate search statistics
 search_stats <- calc_search_stats(dedup_results)
 cat("Search Statistics:\n")
 cat("- Date range:", paste(search_stats$date_range, collapse = " to "), "\n")
 cat("- Missing abstracts:", search_stats$missing_abstracts, "\n")
 cat("- Missing dates:", search_stats$missing_dates, "\n\n")
+```
 
+# Creating a Gold Standard
+
+## Demonstration Gold Standard
+
+For performance evaluation, we need a "gold standard" of known relevant articles. In a real systematic review, this would be your manually identified relevant articles. For this demonstration, we create a simplified gold standard:
+
+```{r gold-standard}
 # Create a gold standard for demonstration
 # In a real systematic review, this would be your known relevant articles
 # For this example, we'll identify articles that contain key terms in titles
@@ -83,7 +190,22 @@ gold_standard_ids <- dedup_results %>%
   pull(id)
 
 cat("Gold standard created with", length(gold_standard_ids), "highly relevant articles\n\n")
+```
 
+**Note**: In practice, your gold standard would be created through:
+
+- Expert knowledge of key articles in the field
+- Pilot searches and manual review
+- Previously published systematic reviews
+- Consultation with domain experts
+
+# Performance Analysis
+
+## Initializing the SearchAnalyzer
+
+The `SearchAnalyzer` class provides comprehensive tools for evaluating search performance:
+
+```{r initialize-analyzer}
 # Initialize SearchAnalyzer with real data
 cat("Initializing SearchAnalyzer...\n")
 analyzer <- SearchAnalyzer$new(
@@ -91,7 +213,13 @@ analyzer <- SearchAnalyzer$new(
   gold_standard = gold_standard_ids,
   search_strategy = search_strategy
 )
+```
 
+## Calculating Performance Metrics
+
+The analyzer calculates a comprehensive set of performance metrics:
+
+```{r calculate-metrics}
 # Calculate comprehensive metrics
 cat("Calculating performance metrics...\n")
 metrics <- analyzer$calculate_metrics()
@@ -110,7 +238,22 @@ cat("Total Records:", metrics$basic$total_records, "\n")
 cat("Unique Records:", metrics$basic$unique_records, "\n")
 cat("Duplicates:", metrics$basic$duplicates, "\n")
 cat("Sources:", metrics$basic$sources, "\n")
+```
 
+### Understanding the Metrics
+
+- **Precision**: Proportion of retrieved articles that are relevant
+- **Recall**: Proportion of relevant articles that are retrieved  
+- **F1 Score**: Harmonic mean of precision and recall
+- **Number Needed to Read**: Average number of articles to screen to find one relevant article
+
+# Visualization and Reporting
+
+## Performance Visualizations
+
+The package generates publication-ready visualizations to assess search performance:
+
+```{r visualizations, fig.width=8, fig.height=6}
 # Generate visualizations
 cat("\nGenerating visualizations...\n")
 
@@ -127,7 +270,13 @@ if (length(gold_standard_ids) > 0) {
   pr_plot <- analyzer$visualize_performance("precision_recall")
   print(pr_plot)
 }
+```
 
+## PRISMA Flow Diagram
+
+The package can generate data for PRISMA flow diagrams, essential for systematic review reporting:
+
+```{r prisma-setup}
 # Generate PRISMA flow diagram data
 cat("\nCreating PRISMA flow data...\n")
 screening_data <- data.frame(
@@ -140,12 +289,22 @@ screening_data <- data.frame(
   excluded_title_abstract = runif(sum(!dedup_results$duplicate)) > 0.3,
   excluded_full_text = runif(sum(!dedup_results$duplicate)) > 0.15
 )
+```
 
+```{r prisma-diagram, fig.width=10, fig.height=8}
 # Generate PRISMA diagram
 reporter <- PRISMAReporter$new()
 prisma_plot <- reporter$generate_prisma_diagram(screening_data)
 print(prisma_plot)
+```
 
+# Data Export and Sharing
+
+## Multiple Export Formats
+
+The package supports exporting results in various formats commonly used in systematic reviews:
+
+```{r export-results}
 # Export results in multiple formats
 cat("\nExporting results...\n")
 output_dir <- tempdir()
@@ -160,7 +319,13 @@ cat("Files exported:\n")
 for (file in export_files) {
   cat("-", file, "\n")
 }
+```
 
+## Metrics Export
+
+Performance metrics can also be exported for further analysis or reporting:
+
+```{r export-metrics}
 # Export metrics
 metrics_file <- export_metrics(
   metrics = metrics,
@@ -168,7 +333,13 @@ metrics_file <- export_metrics(
   format = "xlsx"
 )
 cat("- Metrics exported to:", metrics_file, "\n")
+```
 
+## Comprehensive Data Package
+
+For reproducibility, create a complete data package containing all analysis components:
+
+```{r data-package}
 # Create a complete data package
 cat("\nCreating comprehensive data package...\n")
 package_dir <- create_data_package(
@@ -183,7 +354,15 @@ package_dir <- create_data_package(
 )
 
 cat("Data package created at:", package_dir, "\n")
+```
 
+# Advanced Analysis
+
+## Benchmark Validation
+
+The package includes tools for validating search strategies against established benchmarks:
+
+```{r benchmark-validation}
 # Demonstrate benchmark validation (simplified)
 cat("\nDemonstrating benchmark validation...\n")
 validator <- BenchmarkValidator$new()
@@ -205,7 +384,13 @@ cat("Validation Results:\n")
 cat("- Precision:", round(validation_results$precision, 3), "\n")
 cat("- Recall:", round(validation_results$recall, 3), "\n")
 cat("- F1 Score:", round(validation_results$f1_score, 3), "\n")
+```
 
+## Text Similarity Analysis
+
+Analyze how well the retrieved abstracts match the search terms:
+
+```{r text-similarity}
 # Text similarity analysis on abstracts
 cat("\nAnalyzing abstract similarity to search terms...\n")
 search_term_text <- paste(search_strategy$terms, collapse = " ")
@@ -217,7 +402,13 @@ similarity_scores <- sapply(dedup_results$abstract[!dedup_results$duplicate], fu
 
 cat("Average abstract similarity to search terms:", round(mean(similarity_scores, na.rm = TRUE), 3), "\n")
 cat("Abstracts with high similarity (>0.1):", sum(similarity_scores > 0.1, na.rm = TRUE), "\n")
+```
 
+## Term Effectiveness Analysis
+
+Evaluate which search terms are most effective:
+
+```{r term-analysis}
 # Analyze term effectiveness
 cat("\nAnalyzing individual term effectiveness...\n")
 term_analysis <- term_effectiveness(
@@ -227,19 +418,31 @@ term_analysis <- term_effectiveness(
 )
 
 print(term_analysis)
+```
 
+```{r term-scores}
 # Calculate term effectiveness scores
 term_scores <- calc_tes(term_analysis)
 cat("\nTerm Effectiveness Scores (TES):\n")
 print(term_scores[order(term_scores$tes, decreasing = TRUE), ])
+```
 
+```{r top-terms, fig.width=8, fig.height=6}
 # Find top performing terms
 top_terms <- find_top_terms(term_analysis, n = 3, plot = TRUE, plot_type = "precision_coverage")
 cat("\nTop 3 performing terms:", paste(top_terms$terms, collapse = ", "), "\n")
 if (!is.null(top_terms$plot)) {
   print(top_terms$plot)
 }
+```
 
+# Results Interpretation and Recommendations
+
+## Automated Recommendations
+
+Based on the calculated metrics, the package can provide automated recommendations:
+
+```{r recommendations}
 # Final summary and recommendations
 cat("\n=== FINAL SUMMARY AND RECOMMENDATIONS ===\n")
 cat("Search Topic: Long-term effects of COVID-19\n")
@@ -260,7 +463,13 @@ if (!is.null(metrics$precision_recall$precision)) {
     cat("- Adding synonyms or related terms\n")
   }
 }
+```
 
+## Sample Retrieved Articles
+
+Let's examine some of the retrieved articles to understand the search results:
+
+```{r sample-articles}
 # Show some example retrieved articles
 cat("\n=== SAMPLE RETRIEVED ARTICLES ===\n")
 sample_articles <- filter(dedup_results, !duplicate) %>%
@@ -275,7 +484,15 @@ for (i in 1:nrow(sample_articles)) {
   cat("   PMID:", gsub("PMID:", "", article$id), "\n")
   cat("   Abstract:", substr(article$abstract, 1, 200), "...\n")
 }
+```
 
+# Summary and Next Steps
+
+## What We've Accomplished
+
+This vignette demonstrated a complete workflow using the `searchAnalyzeR` package:
+
+```{r summary}
 cat("\n=== ANALYSIS COMPLETE ===\n")
 cat("This example demonstrated:\n")
 cat("1. Real PubMed search execution using search_pubmed()\n")
@@ -288,6 +505,34 @@ cat("7. Benchmark validation\n")
 cat("8. Term effectiveness analysis\n")
 cat("9. Comprehensive reporting\n")
 cat("\nAll outputs saved to:", output_dir, "\n")
+```
 
+## Files Generated
+
+The analysis generates numerous output files for different purposes:
+
+```{r list-files}
 # Clean up and provide final file locations
 list.files(output_dir, pattern = "covid", full.names = TRUE, recursive = TRUE)
+```
+
+## Next Steps
+
+After completing this analysis, typical next steps would include:
+
+1. **Refining the search strategy** based on performance metrics and term effectiveness analysis
+2. **Expanding to multiple databases** using similar workflows
+3. **Implementing the refined strategy** in your systematic review protocol
+4. **Using the exported data** for screening and data extraction phases
+5. **Incorporating visualizations** into your systematic review protocol or publication
+
+## Additional Resources
+
+For more advanced features and customization options, consult:
+
+- The package documentation: `help(package = "searchAnalyzeR")`
+- Function-specific help: `?search_pubmed`, `?SearchAnalyzer`, etc.
+- Additional vignettes covering specialized topics
+- The package GitHub repository for updates and community contributions
+
+This comprehensive workflow demonstrates how `searchAnalyzeR` can streamline and enhance the systematic review search process, providing objective metrics and visualizations to support evidence-based search strategy development and optimization.

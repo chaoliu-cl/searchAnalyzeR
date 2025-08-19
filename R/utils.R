@@ -867,8 +867,8 @@ plot_term_effectiveness <- function(term_analysis, plot_type = "precision_covera
       ggplot2::labs(
         title = title,
         subtitle = "Bubble size represents number of articles retrieved",
-        x = "Coverage (Proportion of Relevant Articles Retrieved)",
-        y = "Precision (Proportion of Retrieved Articles that are Relevant)"
+        x = "Coverage",
+        y = "Precision"
       ) +
       ggplot2::theme_minimal() +
       ggplot2::theme(

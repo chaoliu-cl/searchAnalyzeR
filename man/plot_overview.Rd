@@ -18,21 +18,19 @@ and other components of the searchAnalyzeR package.
 Create Overview Performance Plot
 }
 \details{
-Creates a comprehensive overview plot displaying:
+Creates a focused overview plot displaying the core search performance metrics:
 \itemize{
-\item Precision, Recall, and F1 Score (Accuracy category)
-\item Coverage metrics (Completeness category)
-\item Efficiency scores (Efficiency category)
+\item Precision: Proportion of retrieved articles that are relevant
+\item Recall: Proportion of relevant articles that were retrieved
+\item F1 Score: Harmonic mean of precision and recall
 }
-The plot uses color coding to distinguish between metric categories and
+The plot uses color coding to distinguish between metric types and
 displays exact values on top of each bar.
 }
 \examples{
 # Assume you have calculated metrics
 metrics <- list(
-  precision_recall = list(precision = 0.8, recall = 0.6, f1_score = 0.69),
-  coverage = list(total_coverage = 0.75),
-  efficiency = list(efficiency_score = 0.45)
+  precision_recall = list(precision = 0.8, recall = 0.6, f1_score = 0.69)
 )
 
 overview_plot <- plot_overview(metrics)
