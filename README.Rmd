@@ -16,7 +16,7 @@ knitr::opts_chunk$set(
 # searchAnalyzeR <img src="man/figures/searchAnalyzeR.png" align="right" height="139" />
 
 <!-- badges: start -->
-[![R-CMD-check](https://github.com/chaoliu-cl/searchAnalyzeR/workflows/R-CMD-check/badge.svg)](https://github.com/chaoliu-cl/searchAnalyzeR/actions)
+[![R-CMD-check](https://github.com/chaoliu-cl/searchAnalyzeR/workflows/R-CMD-check/badge.svg)](https://github.com/chaoliu-cl/searchAnalyzeR/actions/workflows/R-CMD-check.yaml)
 [![CRAN status](https://www.r-pkg.org/badges/version/searchAnalyzeR)](https://CRAN.R-project.org/package=searchAnalyzeR)
 [![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
 <!-- badges: end -->

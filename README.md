@@ -5,7 +5,7 @@
 
 <!-- badges: start -->
 
-[![R-CMD-check](https://github.com/chaoliu-cl/searchAnalyzeR/workflows/R-CMD-check/badge.svg)](https://github.com/chaoliu-cl/searchAnalyzeR/actions)
+[![R-CMD-check](https://github.com/chaoliu-cl/searchAnalyzeR/workflows/R-CMD-check/badge.svg)](https://github.com/chaoliu-cl/searchAnalyzeR/actions/workflows/R-CMD-check.yaml)
 [![CRAN
 status](https://www.r-pkg.org/badges/version/searchAnalyzeR)](https://CRAN.R-project.org/package=searchAnalyzeR)
 [![Lifecycle:
