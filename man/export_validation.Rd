@@ -19,3 +19,21 @@ File path of created file
 \description{
 Export Validation Results
 }
+\examples{
+# Create sample validation results
+validation_results <- list(
+  precision = 0.8,
+  recall = 0.6,
+  f1_score = 0.69,
+  true_positives = 24,
+  false_positives = 6,
+  false_negatives = 16
+)
+
+# Export validation results (writes to tempdir())
+output_file <- export_validation(
+  validation_results,
+  file.path(tempdir(), "validation.xlsx")
+)
+print(output_file)
+}

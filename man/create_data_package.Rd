@@ -7,7 +7,7 @@
 create_data_package(
   search_results,
   analysis_results = NULL,
-  output_dir = ".",
+  output_dir = NULL,
   package_name = "search_analysis_package"
 )
 }
@@ -16,7 +16,7 @@ create_data_package(
 
 \item{analysis_results}{List of analysis results}
 
-\item{output_dir}{Directory to create the package}
+\item{output_dir}{Directory to create the package (defaults to tempdir())}
 
 \item{package_name}{Name of the package}
 }
@@ -25,4 +25,19 @@ Path to created package directory
 }
 \description{
 Create Data Package for Sharing
+}
+\examples{
+# Create sample data
+search_results <- data.frame(
+  id = paste0("art", 1:10),
+  title = paste("Study", 1:10),
+  abstract = paste("Abstract", 1:10),
+  source = "Journal",
+  date = Sys.Date(),
+  stringsAsFactors = FALSE
+)
+
+# Create data package (writes to tempdir())
+package_path <- create_data_package(search_results)
+print(package_path)
 }

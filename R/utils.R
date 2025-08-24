@@ -13,22 +13,22 @@
 #' Check Package Dependencies
 #'
 #' @param required_packages Character vector of required package names
-#' @param install_missing Logical, whether to install missing packages
+#' @param install_missing Logical, whether to suggest installing missing packages
 #' @return Logical vector indicating which packages are available
 #' @details
-#' This function checks if required packages are installed and optionally
-#' installs missing packages. It uses \code{requireNamespace} to check
-#' availability without loading packages.
+#' This function checks if required packages are installed using \code{requireNamespace}
+#' to check availability without loading packages. For CRAN compliance, this function
+#' does not automatically install packages.
 #' @examples
 #' # Check if packages are available
-#' required <- c("dplyr", "ggplot2", "nonexistent_package")
-#' availability <- check_deps(required, install_missing = FALSE)
+#' required <- c("ggplot2", "dplyr")
+#' availability <- check_deps(required)
 #' print(availability)
 #'
-#' # Check and install missing packages (use with caution)
-#' \dontrun{
-#' check_deps(required, install_missing = TRUE)
-#' }
+#' # Get suggestions for missing packages
+#' required_with_missing <- c("ggplot2", "dplyr", "nonexistent_package")
+#' availability <- check_deps(required_with_missing, install_missing = TRUE)
+#' print(availability)
 #' @export
 check_deps <- function(required_packages, install_missing = FALSE) {
   # If no packages were requested, immediately return a logical(0)
@@ -36,7 +36,7 @@ check_deps <- function(required_packages, install_missing = FALSE) {
     return(stats::setNames(logical(0), character(0)))
   }
 
-  # Always get a logical vector back, even length‐0, by using vapply()
+  # Always get a logical vector back, even length 0, by using vapply()
   available <- vapply(
     required_packages,
     function(pkg) requireNamespace(pkg, quietly = TRUE),
@@ -47,16 +47,10 @@ check_deps <- function(required_packages, install_missing = FALSE) {
     missing_packages <- required_packages[!available]
 
     if (install_missing) {
-      message("Installing missing packages: ",
+      message("Missing packages detected: ",
               paste(missing_packages, collapse = ", "))
-      utils::install.packages(missing_packages)
-
-      # Re-check availability, again via vapply()
-      available <- vapply(
-        required_packages,
-        function(pkg) requireNamespace(pkg, quietly = TRUE),
-        logical(1)
-      )
+      message("To install missing packages, run:")
+      message("install.packages(c(", paste0('"', missing_packages, '"', collapse = ", "), "))")
     } else {
       warning("Missing required packages: ",
               paste(missing_packages, collapse = ", "))
@@ -360,22 +354,32 @@ get_pkg_versions <- function(packages = c("searchAnalyzeR", "ggplot2", "lubridat
   )
 
   for (pkg in packages) {
-    tryCatch({
-      version <- utils::packageVersion(pkg)
-      result <- rbind(result, data.frame(
-        package = pkg,
-        version = as.character(version),
-        available = TRUE,
-        stringsAsFactors = FALSE
-      ))
-    }, error = function(e) {
+    # Use requireNamespace instead of installed.packages() for better performance
+    if (requireNamespace(pkg, quietly = TRUE)) {
+      tryCatch({
+        version <- utils::packageVersion(pkg)
+        result <- rbind(result, data.frame(
+          package = pkg,
+          version = as.character(version),
+          available = TRUE,
+          stringsAsFactors = FALSE
+        ))
+      }, error = function(e) {
+        result <- rbind(result, data.frame(
+          package = pkg,
+          version = NA_character_,
+          available = FALSE,
+          stringsAsFactors = FALSE
+        ))
+      })
+    } else {
       result <- rbind(result, data.frame(
         package = pkg,
         version = NA_character_,
         available = FALSE,
         stringsAsFactors = FALSE
       ))
-    })
+    }
   }
 
   return(result)
@@ -792,7 +796,30 @@ print.term_effectiveness <- function(x, ...) {
 #' "coverage_only" for focused analysis.
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
+#' # Create sample data for demonstration
+#' search_results <- data.frame(
+#'   id = paste0("art", 1:10),
+#'   title = c("Diabetes treatment", "Clinical trial", "Diabetes study",
+#'             "Treatment options", "New therapy", "Glucose control",
+#'             "Insulin therapy", "Management of diabetes", "Clinical study",
+#'             "Therapy comparison"),
+#'   abstract = c("This study examines diabetes treatments.",
+#'                "A clinical trial on new treatments.",
+#'                "Diabetes research findings.",
+#'                "Comparison of treatment options.",
+#'                "Novel therapy approach.",
+#'                "Methods to control glucose levels.",
+#'                "Insulin therapy effectiveness.",
+#'                "Managing diabetes effectively.",
+#'                "Clinical research protocols.",
+#'                "Comparing therapy approaches.")
+#' )
+#'
+#' # Define search terms and gold standard
+#' terms <- c("diabetes", "treatment", "clinical", "therapy")
+#' gold_standard <- c("art1", "art3", "art7", "art8")
+#'
 #' # First analyze term effectiveness
 #' term_metrics <- term_effectiveness(terms, search_results, gold_standard)
 #'

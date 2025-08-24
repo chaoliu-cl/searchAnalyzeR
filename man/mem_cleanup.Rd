@@ -4,12 +4,14 @@
 \alias{mem_cleanup}
 \title{Clean up Search Analysis Objects to Free Memory}
 \usage{
-mem_cleanup(keep_results = TRUE, verbose = TRUE)
+mem_cleanup(keep_results = TRUE, verbose = TRUE, env = parent.frame())
 }
 \arguments{
 \item{keep_results}{Logical, whether to keep final results}
 
 \item{verbose}{Logical, whether to print memory freed information}
+
+\item{env}{Environment to clean (defaults to parent.frame())}
 }
 \value{
 Amount of memory freed in MB

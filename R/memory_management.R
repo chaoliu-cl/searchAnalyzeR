@@ -124,9 +124,10 @@ opt_df <- function(df, compress_strings = FALSE, verbose = TRUE) {
 #'
 #' @param keep_results Logical, whether to keep final results
 #' @param verbose Logical, whether to print memory freed information
+#' @param env Environment to clean (defaults to parent.frame())
 #' @return Amount of memory freed in MB
 #' @export
-mem_cleanup <- function(keep_results = TRUE, verbose = TRUE) {
+mem_cleanup <- function(keep_results = TRUE, verbose = TRUE, env = parent.frame()) {
   # Get initial memory usage
   initial_mem <- mem_usage(include_gc = TRUE)
 
@@ -136,8 +137,8 @@ mem_cleanup <- function(keep_results = TRUE, verbose = TRUE) {
     "^chunk_", "^batch_", "_copy$", "^raw_", "^processed_", "^.*_matrix$"
   )
 
-  # Get list of objects in global environment
-  all_objects <- ls(envir = .GlobalEnv)
+  # Get list of objects in specified environment
+  all_objects <- ls(envir = env)
 
   # Find objects that match temporary patterns
   temp_objects <- character(0)
@@ -163,11 +164,11 @@ mem_cleanup <- function(keep_results = TRUE, verbose = TRUE) {
     message("No temporary objects found to remove")
   }
 
-  # Remove the temporary objects
+  # Remove the temporary objects from specified environment
   if (length(temp_objects) > 0) {
     for (obj in temp_objects) {
-      if (exists(obj, envir = .GlobalEnv)) {
-        rm(list = obj, envir = .GlobalEnv)
+      if (exists(obj, envir = env)) {
+        rm(list = obj, envir = env)
       }
     }
   }

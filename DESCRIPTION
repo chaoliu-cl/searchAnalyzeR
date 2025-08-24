@@ -10,17 +10,21 @@ Authors@R:
            comment = c(ORCID = "0000-0002-9979-8272"))
 Description: Provides comprehensive analytics, reporting, and testing capabilities 
     for systematic review search strategies. The package focuses on validating search 
-    performance, generating standardized PRISMA-compliant reports, and ensuring 
+    performance, generating standardized 'PRISMA'-compliant reports, and ensuring 
     reproducibility in evidence synthesis. Features include precision-recall analysis, 
     cross-database performance comparison, benchmark validation against gold standards, 
     sensitivity analysis, temporal coverage assessment, automated report generation,
     and statistical comparison of search strategies. Supports multiple export formats 
-    including CSV, Excel, RIS, BibTeX, and EndNote. Includes tools for duplicate 
+    including 'CSV', 'Excel', 'RIS', 'BibTeX', and 'EndNote'. Includes tools for duplicate 
     detection, search strategy optimization, cross-validation frameworks, meta-analysis 
     of benchmark results, power analysis for study design, and reproducibility package 
-    creation. Optionally connects to PubMed for direct database searching and real-time 
-    strategy comparison. Enhanced with bootstrap comparison methods, McNemar's test for 
-    strategy evaluation, and comprehensive visualization tools for performance assessment.
+    creation. Optionally connects to 'PubMed' for direct database searching and real-time 
+    strategy comparison using the 'E-utilities' 'API'. Enhanced with bootstrap comparison 
+    methods, 'McNemar' test for strategy evaluation, and comprehensive visualization tools 
+    for performance assessment. Methods based on Manning et al. (2008) 
+    for information retrieval metrics, Moher et al. (2009)
+    for 'PRISMA' guidelines, and Sampson et al. (2006) for 
+    systematic review search methodology.
 License: GPL-3
 URL: https://github.com/chaoliu-cl/searchAnalyzeR
 BugReports: https://github.com/chaoliu-cl/searchAnalyzeR/issues

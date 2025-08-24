@@ -19,3 +19,14 @@ File path of created file
 \description{
 Export Analysis Metrics
 }
+\examples{
+# Create sample metrics
+metrics <- list(
+  basic = list(total_records = 100, unique_records = 95),
+  precision_recall = list(precision = 0.8, recall = 0.6, f1_score = 0.69)
+)
+
+# Export metrics (writes to tempdir())
+output_file <- export_metrics(metrics, file.path(tempdir(), "metrics.xlsx"))
+print(output_file)
+}

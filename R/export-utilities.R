@@ -20,6 +20,20 @@
 #'   \item \strong{BibTeX}: LaTeX bibliography format
 #'   \item \strong{EndNote}: Thomson Reuters EndNote format
 #' }
+#' @examples
+#' # Create sample search results
+#' search_results <- data.frame(
+#'   id = paste0("article_", 1:5),
+#'   title = paste("Sample Article", 1:5),
+#'   abstract = paste("Abstract for article", 1:5),
+#'   source = "Sample Journal",
+#'   date = Sys.Date(),
+#'   stringsAsFactors = FALSE
+#' )
+#'
+#' # Export to multiple formats (writes to tempdir())
+#' output_files <- export_results(search_results, formats = c("csv", "xlsx"))
+#' print(output_files)
 #' @export
 export_results <- function(search_results, file_path = NULL,
                            formats = c("csv", "xlsx"),
@@ -321,6 +335,16 @@ export_to_endnote <- function(search_results, file_path) {
 #' @param file_path Output file path
 #' @param format Export format ("csv", "xlsx", "json")
 #' @return File path of created file
+#' @examples
+#' # Create sample metrics
+#' metrics <- list(
+#'   basic = list(total_records = 100, unique_records = 95),
+#'   precision_recall = list(precision = 0.8, recall = 0.6, f1_score = 0.69)
+#' )
+#'
+#' # Export metrics (writes to tempdir())
+#' output_file <- export_metrics(metrics, file.path(tempdir(), "metrics.xlsx"))
+#' print(output_file)
 #' @export
 export_metrics <- function(metrics, file_path, format = "xlsx") {
   # FIXED: Add proper input validation
@@ -552,12 +576,31 @@ export_metrics_json <- function(metrics, file_path) {
 #'
 #' @param search_results Data frame with search results
 #' @param analysis_results List of analysis results
-#' @param output_dir Directory to create the package
+#' @param output_dir Directory to create the package (defaults to tempdir())
 #' @param package_name Name of the package
 #' @return Path to created package directory
+#' @examples
+#' # Create sample data
+#' search_results <- data.frame(
+#'   id = paste0("art", 1:10),
+#'   title = paste("Study", 1:10),
+#'   abstract = paste("Abstract", 1:10),
+#'   source = "Journal",
+#'   date = Sys.Date(),
+#'   stringsAsFactors = FALSE
+#' )
+#'
+#' # Create data package (writes to tempdir())
+#' package_path <- create_data_package(search_results)
+#' print(package_path)
 #' @export
 create_data_package <- function(search_results, analysis_results = NULL,
-                                output_dir = ".", package_name = "search_analysis_package") {
+                                output_dir = NULL, package_name = "search_analysis_package") {
+
+  # Use tempdir() by default to comply with CRAN policies
+  if (is.null(output_dir)) {
+    output_dir <- tempdir()
+  }
 
   # Create package directory
   package_dir <- file.path(output_dir, package_name)
@@ -893,6 +936,23 @@ create_package_manifest <- function(package_dir) {
 #' @param file_path Output file path
 #' @param format Export format ("xlsx", "csv", "json")
 #' @return File path of created file
+#' @examples
+#' # Create sample validation results
+#' validation_results <- list(
+#'   precision = 0.8,
+#'   recall = 0.6,
+#'   f1_score = 0.69,
+#'   true_positives = 24,
+#'   false_positives = 6,
+#'   false_negatives = 16
+#' )
+#'
+#' # Export validation results (writes to tempdir())
+#' output_file <- export_validation(
+#'   validation_results,
+#'   file.path(tempdir(), "validation.xlsx")
+#' )
+#' print(output_file)
 #' @export
 export_validation <- function(validation_results, file_path, format = "xlsx") {
   switch(format,

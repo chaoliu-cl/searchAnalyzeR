@@ -50,7 +50,7 @@
 #'   parameters = list(threshold = 0.8)
 #' )
 #'
-#' # Create reproducible package
+#' # Create reproducible package (writes to tempdir())
 #' package_path <- manager$create_repro_package(
 #'   search_strategy = search_strategy,
 #'   results = search_results,
@@ -94,7 +94,7 @@ ReproducibilityManager <- R6::R6Class(
     #' @param analysis_config Analysis configuration
     #' @return Path to reproducibility package
     create_repro_package = function(search_strategy, results, analysis_config) {
-      package_dir <- tempdir()
+      package_dir <- file.path(tempdir(), "repro_package")
 
       # Create directory structure
       dir.create(file.path(package_dir, "data"), recursive = TRUE)
@@ -171,13 +171,19 @@ ReproducibilityManager <- R6::R6Class(
     required_packages = NULL,
 
     check_system_requirements = function() {
-      # Check if required packages are available
-      missing_packages <- setdiff(private$required_packages,
-                                  rownames(installed.packages()))
+      # Check if required packages are available using requireNamespace
+      missing_packages <- c()
+      for (pkg in private$required_packages) {
+        if (!requireNamespace(pkg, quietly = TRUE)) {
+          missing_packages <- c(missing_packages, pkg)
+        }
+      }
 
       if (length(missing_packages) > 0) {
         warning("Missing required packages for reproducibility: ",
-                paste(missing_packages, collapse = ", "))
+                paste(missing_packages, collapse = ", "),
+                "\nTo install: install.packages(c(",
+                paste0('"', missing_packages, '"', collapse = ", "), "))")
       }
 
       invisible(TRUE)
@@ -274,13 +280,16 @@ ReproducibilityManager <- R6::R6Class(
     },
 
     get_pkg_versions = function() {
-      installed_packages <- installed.packages()
       relevant_packages <- c("searchAnalyzeR", "dplyr", "ggplot2")
 
-      # Using base R sapply instead of specialized functions
+      # Using requireNamespace instead of installed.packages() for better performance
       versions <- sapply(relevant_packages, function(pkg) {
-        if (pkg %in% rownames(installed_packages)) {
-          as.character(packageVersion(pkg))
+        if (requireNamespace(pkg, quietly = TRUE)) {
+          tryCatch({
+            as.character(utils::packageVersion(pkg))
+          }, error = function(e) {
+            "Version unavailable"
+          })
         } else {
           "Not installed"
         }

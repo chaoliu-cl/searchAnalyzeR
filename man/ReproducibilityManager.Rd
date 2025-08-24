@@ -55,7 +55,7 @@ analysis_config <- list(
   parameters = list(threshold = 0.8)
 )
 
-# Create reproducible package
+# Create reproducible package (writes to tempdir())
 package_path <- manager$create_repro_package(
   search_strategy = search_strategy,
   results = search_results,

@@ -718,7 +718,7 @@ complete_search_workflow <- function(search_terms,
   cat("\\nStep 6: Generating reports...\\n")
   reporter <- PRISMAReporter$new()
 
-  # Create data package
+  # Create data package in tempdir()
   package_dir <- create_data_package(
     search_results = processed_results,
     analysis_results = list(metrics = metrics, plots = plots),

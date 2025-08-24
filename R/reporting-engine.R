@@ -90,7 +90,7 @@ PRISMAReporter <- R6::R6Class(
         temporal = search_analysis$visualize_performance("temporal")
       )
 
-      # Render report
+      # Render report to tempdir() by default
       output_file <- private$render_report(template_path, report_data, plots, output_format)
 
       return(output_file)
@@ -144,7 +144,7 @@ PRISMAReporter <- R6::R6Class(
       list2env(data, envir = report_env)
       assign("plots", plots, envir = report_env)
 
-      # Generate output filename
+      # Generate output filename in tempdir()
       output_file <- tempfile(fileext = paste0(".", format))
 
       # Render with rmarkdown
@@ -169,7 +169,7 @@ PRISMAReporter <- R6::R6Class(
     },
 
     create_simple_report = function(data, plots, format) {
-      # Fallback simple report creation
+      # Fallback simple report creation - writes to tempdir()
       output_file <- tempfile(fileext = ".txt")
 
       report_lines <- c(

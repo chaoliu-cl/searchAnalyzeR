@@ -7,9 +7,6 @@ library(dplyr)
 library(ggplot2)
 library(lubridate)
 
-# Suppress warnings during testing
-options(warn = -1)
-
 # Set up consistent testing environment
 options(stringsAsFactors = FALSE)
 set.seed(42)  # For reproducible random data in tests
@@ -56,6 +53,12 @@ expect_no_error <- function(object) {
 # Alternative function for silent execution expectation
 expect_silent_execution <- function(object) {
   testthat::expect_silent(object)
+}
+
+# Helper function to suppress warnings only when needed for specific tests
+# This should be used sparingly and only for known harmless warnings
+with_suppressed_warnings <- function(expr) {
+  suppressWarnings(expr)
 }
 
 # Cleanup function to be called after all tests

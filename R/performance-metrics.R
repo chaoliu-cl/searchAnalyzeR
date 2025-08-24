@@ -290,6 +290,15 @@ calc_temporal_coverage <- function(search_results, target_date_range = NULL) {
 #' print(comparison$overlap_analysis)
 #' @export
 calc_strategy_comparison <- function(strategy1_results, strategy2_results, gold_standard) {
+  # Input validation
+  if (is.null(strategy1_results) || is.null(strategy2_results) || is.null(gold_standard)) {
+    stop("All inputs must be non-NULL")
+  }
+
+  if (!is.vector(strategy1_results) || !is.vector(strategy2_results) || !is.vector(gold_standard)) {
+    stop("All inputs must be vectors")
+  }
+
   # Calculate performance metrics for each strategy
   metrics1 <- calc_precision_recall(strategy1_results, gold_standard)
   metrics2 <- calc_precision_recall(strategy2_results, gold_standard)
@@ -305,7 +314,11 @@ calc_strategy_comparison <- function(strategy1_results, strategy2_results, gold_
     unique_to_strategy1 = length(unique_to_1),
     unique_to_strategy2 = length(unique_to_2),
     total_unique = length(combined_unique),
-    overlap_percentage = length(overlap) / length(combined_unique) * 100
+    overlap_percentage = if (length(combined_unique) > 0) {
+      length(overlap) / length(combined_unique) * 100
+    } else {
+      0
+    }
   )
 
   # Performance comparison
@@ -327,10 +340,21 @@ calc_strategy_comparison <- function(strategy1_results, strategy2_results, gold_
   relevant_unique_to_2 <- length(intersect(unique_to_2, gold_standard))
 
   complementarity <- list(
-    added_recall_by_strategy2 = relevant_unique_to_2 / length(gold_standard),
-    added_recall_by_strategy1 = relevant_unique_to_1 / length(gold_standard),
-    synergy_score = (relevant_unique_to_1 + relevant_unique_to_2) /
-      (length(unique_to_1) + length(unique_to_2))
+    added_recall_by_strategy2 = if (length(gold_standard) > 0) {
+      relevant_unique_to_2 / length(gold_standard)
+    } else {
+      0
+    },
+    added_recall_by_strategy1 = if (length(gold_standard) > 0) {
+      relevant_unique_to_1 / length(gold_standard)
+    } else {
+      0
+    },
+    synergy_score = if ((length(unique_to_1) + length(unique_to_2)) > 0) {
+      (relevant_unique_to_1 + relevant_unique_to_2) / (length(unique_to_1) + length(unique_to_2))
+    } else {
+      0
+    }
   )
 
   list(

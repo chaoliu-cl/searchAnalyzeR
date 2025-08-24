@@ -9,7 +9,7 @@ check_deps(required_packages, install_missing = FALSE)
 \arguments{
 \item{required_packages}{Character vector of required package names}
 
-\item{install_missing}{Logical, whether to install missing packages}
+\item{install_missing}{Logical, whether to suggest installing missing packages}
 }
 \value{
 Logical vector indicating which packages are available
@@ -18,18 +18,18 @@ Logical vector indicating which packages are available
 This file contains general utility functions used throughout the package.
 }
 \details{
-This function checks if required packages are installed and optionally
-installs missing packages. It uses \code{requireNamespace} to check
-availability without loading packages.
+This function checks if required packages are installed using \code{requireNamespace}
+to check availability without loading packages. For CRAN compliance, this function
+does not automatically install packages.
 }
 \examples{
 # Check if packages are available
-required <- c("dplyr", "ggplot2", "nonexistent_package")
-availability <- check_deps(required, install_missing = FALSE)
+required <- c("ggplot2", "dplyr")
+availability <- check_deps(required)
 print(availability)
 
-# Check and install missing packages (use with caution)
-\dontrun{
-check_deps(required, install_missing = TRUE)
-}
+# Get suggestions for missing packages
+required_with_missing <- c("ggplot2", "dplyr", "nonexistent_package")
+availability <- check_deps(required_with_missing, install_missing = TRUE)
+print(availability)
 }

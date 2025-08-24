@@ -39,3 +39,18 @@ systematic reviews and reference management. Supported formats include:
 \item \strong{EndNote}: Thomson Reuters EndNote format
 }
 }
+\examples{
+# Create sample search results
+search_results <- data.frame(
+  id = paste0("article_", 1:5),
+  title = paste("Sample Article", 1:5),
+  abstract = paste("Abstract for article", 1:5),
+  source = "Sample Journal",
+  date = Sys.Date(),
+  stringsAsFactors = FALSE
+)
+
+# Export to multiple formats (writes to tempdir())
+output_files <- export_results(search_results, formats = c("csv", "xlsx"))
+print(output_files)
+}

@@ -35,7 +35,30 @@ for creating individual, clean plots. New plot types include "precision_only" an
 "coverage_only" for focused analysis.
 }
 \examples{
-\dontrun{
+\donttest{
+# Create sample data for demonstration
+search_results <- data.frame(
+  id = paste0("art", 1:10),
+  title = c("Diabetes treatment", "Clinical trial", "Diabetes study",
+            "Treatment options", "New therapy", "Glucose control",
+            "Insulin therapy", "Management of diabetes", "Clinical study",
+            "Therapy comparison"),
+  abstract = c("This study examines diabetes treatments.",
+               "A clinical trial on new treatments.",
+               "Diabetes research findings.",
+               "Comparison of treatment options.",
+               "Novel therapy approach.",
+               "Methods to control glucose levels.",
+               "Insulin therapy effectiveness.",
+               "Managing diabetes effectively.",
+               "Clinical research protocols.",
+               "Comparing therapy approaches.")
+)
+
+# Define search terms and gold standard
+terms <- c("diabetes", "treatment", "clinical", "therapy")
+gold_standard <- c("art1", "art3", "art7", "art8")
+
 # First analyze term effectiveness
 term_metrics <- term_effectiveness(terms, search_results, gold_standard)
 
