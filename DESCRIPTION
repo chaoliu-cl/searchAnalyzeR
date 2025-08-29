@@ -26,7 +26,7 @@ Description: Provides comprehensive analytics, reporting, and testing capabiliti
     for 'PRISMA' guidelines, and Sampson et al. (2006) for 
     systematic review search methodology.
 License: GPL-3
-URL: https://github.com/chaoliu-cl/searchAnalyzeR
+URL: https://github.com/chaoliu-cl/searchAnalyzeR, http://liu-chao.site/searchAnalyzeR/
 BugReports: https://github.com/chaoliu-cl/searchAnalyzeR/issues
 LazyData: true
 Encoding: UTF-8
