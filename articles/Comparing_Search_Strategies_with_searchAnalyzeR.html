@@ -61,7 +61,7 @@
                         <h4 data-toc-skip class="author">searchAnalyzeR
 Package</h4>
             
-            <h4 data-toc-skip class="date">2025-08-29</h4>
+            <h4 data-toc-skip class="date">2025-11-03</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/chaoliu-cl/searchAnalyzeR/blob/main/vignettes/Comparing_Search_Strategies_with_searchAnalyzeR.Rmd" class="external-link"><code>vignettes/Comparing_Search_Strategies_with_searchAnalyzeR.Rmd</code></a></small>
       <div class="d-none name"><code>Comparing_Search_Strategies_with_searchAnalyzeR.Rmd</code></div>
@@ -315,11 +315,11 @@ using high-confidence indicators of research quality.</p>
 <span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Gold standard created with"</span>, <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">gold_standard_ids</span><span class="op">)</span>, <span class="st">"high-confidence relevant articles\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Gold standard created with 74 high-confidence relevant articles</span></span>
+<span><span class="co">#&gt; Gold standard created with 70 high-confidence relevant articles</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"- Overlap between strategies:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">overlap_ids</span><span class="op">)</span>, <span class="st">"articles\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; - Overlap between strategies: 1 articles</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"- Systematic reviews Strategy A:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">systematic_A</span><span class="op">)</span>, <span class="st">"articles\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; - Systematic reviews Strategy A: 5 articles</span></span>
+<span><span class="co">#&gt; - Systematic reviews Strategy A: 2 articles</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"- Systematic reviews Strategy B:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">systematic_B</span><span class="op">)</span>, <span class="st">"articles\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; - Systematic reviews Strategy B: 15 articles</span></span></code></pre></div>
 </div>
@@ -355,11 +355,11 @@ SearchAnalyzer class.</p>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Total Articles Retrieved:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">unique_A</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Total Articles Retrieved: 200</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Precision:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">metrics_A</span><span class="op">$</span><span class="va">precision_recall</span><span class="op">$</span><span class="va">precision</span>, <span class="fl">3</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Precision: 0.05</span></span>
+<span><span class="co">#&gt; Precision: 0.03</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Recall:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">metrics_A</span><span class="op">$</span><span class="va">precision_recall</span><span class="op">$</span><span class="va">recall</span>, <span class="fl">3</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Recall: 0.135</span></span>
+<span><span class="co">#&gt; Recall: 0.086</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"F1 Score:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">metrics_A</span><span class="op">$</span><span class="va">precision_recall</span><span class="op">$</span><span class="va">f1_score</span>, <span class="fl">3</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; F1 Score: 0.073</span></span>
+<span><span class="co">#&gt; F1 Score: 0.044</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"\nSTRATEGY B (Targeted Clinical COVID) PERFORMANCE:\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -369,9 +369,9 @@ SearchAnalyzer class.</p>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Precision:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">metrics_B</span><span class="op">$</span><span class="va">precision_recall</span><span class="op">$</span><span class="va">precision</span>, <span class="fl">3</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Precision: 0.325</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Recall:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">metrics_B</span><span class="op">$</span><span class="va">precision_recall</span><span class="op">$</span><span class="va">recall</span>, <span class="fl">3</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Recall: 0.878</span></span>
+<span><span class="co">#&gt; Recall: 0.929</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"F1 Score:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">metrics_B</span><span class="op">$</span><span class="va">precision_recall</span><span class="op">$</span><span class="va">f1_score</span>, <span class="fl">3</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; F1 Score: 0.474</span></span></code></pre></div>
+<span><span class="co">#&gt; F1 Score: 0.481</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="statistical-comparison">Statistical Comparison<a class="anchor" aria-label="anchor" href="#statistical-comparison"></a>
@@ -404,9 +404,9 @@ between strategies are significant.</p>
 <span><span class="op">}</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; PERFORMANCE DIFFERENCES (B - A):</span></span>
-<span><span class="co">#&gt; Precision Difference: 0.275 </span></span>
-<span><span class="co">#&gt; Recall Difference: 0.743 </span></span>
-<span><span class="co">#&gt; F1 Score Difference: 0.401</span></span></code></pre></div>
+<span><span class="co">#&gt; Precision Difference: 0.295 </span></span>
+<span><span class="co">#&gt; Recall Difference: 0.843 </span></span>
+<span><span class="co">#&gt; F1 Score Difference: 0.437</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="strategy-complementarity-analysis">Strategy Complementarity Analysis<a class="anchor" aria-label="anchor" href="#strategy-complementarity-analysis"></a>
@@ -437,11 +437,11 @@ between strategies are significant.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; COMPLEMENTARITY ANALYSIS:</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Added Recall by Strategy A:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">strategy_comparison</span><span class="op">$</span><span class="va">complementarity</span><span class="op">$</span><span class="va">added_recall_by_strategy1</span>, <span class="fl">3</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Added Recall by Strategy A: 0.122</span></span>
+<span><span class="co">#&gt; Added Recall by Strategy A: 0.071</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Added Recall by Strategy B:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">strategy_comparison</span><span class="op">$</span><span class="va">complementarity</span><span class="op">$</span><span class="va">added_recall_by_strategy2</span>, <span class="fl">3</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Added Recall by Strategy B: 0.865</span></span>
+<span><span class="co">#&gt; Added Recall by Strategy B: 0.914</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Synergy Score:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">strategy_comparison</span><span class="op">$</span><span class="va">complementarity</span><span class="op">$</span><span class="va">synergy_score</span>, <span class="fl">3</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Synergy Score: 0.183</span></span></code></pre></div>
+<span><span class="co">#&gt; Synergy Score: 0.173</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="temporal-coverage-analysis">Temporal Coverage Analysis<a class="anchor" aria-label="anchor" href="#temporal-coverage-analysis"></a>
@@ -456,14 +456,14 @@ periods.</p>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"TEMPORAL COVERAGE ANALYSIS:\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; TEMPORAL COVERAGE ANALYSIS:</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Strategy A - Target Period Coverage:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">temporal_A</span><span class="op">$</span><span class="va">target_period_coverage</span> <span class="op">*</span> <span class="fl">100</span>, <span class="fl">1</span><span class="op">)</span>, <span class="st">"%\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Strategy A - Target Period Coverage: 56.5 %</span></span>
+<span><span class="co">#&gt; Strategy A - Target Period Coverage: 57 %</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Strategy B - Target Period Coverage:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">temporal_B</span><span class="op">$</span><span class="va">target_period_coverage</span> <span class="op">*</span> <span class="fl">100</span>, <span class="fl">1</span><span class="op">)</span>, <span class="st">"%\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Strategy B - Target Period Coverage: 99.5 %</span></span>
 <span></span>
 <span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">temporal_A</span><span class="op">$</span><span class="va">peak_years</span><span class="op">)</span> <span class="op">&gt;</span> <span class="fl">0</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Strategy A - Peak Publication Years:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="va">temporal_A</span><span class="op">$</span><span class="va">peak_years</span>, collapse <span class="op">=</span> <span class="st">", "</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
 <span><span class="op">}</span></span>
-<span><span class="co">#&gt; Strategy A - Peak Publication Years: 2024, 2025, 2023</span></span>
+<span><span class="co">#&gt; Strategy A - Peak Publication Years: 2024, 2025, 2022</span></span>
 <span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">temporal_B</span><span class="op">$</span><span class="va">peak_years</span><span class="op">)</span> <span class="op">&gt;</span> <span class="fl">0</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Strategy B - Peak Publication Years:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="va">temporal_B</span><span class="op">$</span><span class="va">peak_years</span>, collapse <span class="op">=</span> <span class="st">", "</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
 <span><span class="op">}</span></span>
@@ -621,11 +621,11 @@ each strategy.</p>
 <span><span class="co">#&gt; Term Effectiveness Analysis</span></span>
 <span><span class="co">#&gt; ==========================</span></span>
 <span><span class="co">#&gt;         term precision coverage        tes</span></span>
-<span><span class="co">#&gt;     covid-19     0.059    1.000 0.11111111</span></span>
-<span><span class="co">#&gt;  coronavirus     0.107    0.300 0.15789474</span></span>
-<span><span class="co">#&gt;   sars-cov-2     0.086    0.300 0.13333333</span></span>
-<span><span class="co">#&gt;     pandemic     0.025    0.300 0.04580153</span></span>
-<span><span class="co">#&gt;        covid     0.057    1.000 0.10869565</span></span>
+<span><span class="co">#&gt;     covid-19     0.034    1.000 0.06593407</span></span>
+<span><span class="co">#&gt;  coronavirus     0.100    0.333 0.15384615</span></span>
+<span><span class="co">#&gt;   sars-cov-2     0.074    0.333 0.12121212</span></span>
+<span><span class="co">#&gt;     pandemic     0.016    0.333 0.02985075</span></span>
+<span><span class="co">#&gt;        covid     0.033    1.000 0.06417112</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"\nTerm Effectiveness for Strategy B (Targeted Clinical COVID):\n"</span><span class="op">)</span> </span>
 <span><span class="co">#&gt; </span></span>
@@ -741,11 +741,11 @@ each strategy.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Detailed comparison:</span></span>
 <span><span class="co">#&gt;  strategy                                 term  precision   coverage        tes</span></span>
-<span><span class="co">#&gt;     Broad                             covid-19 0.05882353 1.00000000 0.11111111</span></span>
-<span><span class="co">#&gt;     Broad                          coronavirus 0.10714286 0.30000000 0.15789474</span></span>
-<span><span class="co">#&gt;     Broad                           sars-cov-2 0.08571429 0.30000000 0.13333333</span></span>
-<span><span class="co">#&gt;     Broad                             pandemic 0.02479339 0.30000000 0.04580153</span></span>
-<span><span class="co">#&gt;     Broad                                covid 0.05747126 1.00000000 0.10869565</span></span>
+<span><span class="co">#&gt;     Broad                             covid-19 0.03409091 1.00000000 0.06593407</span></span>
+<span><span class="co">#&gt;     Broad                          coronavirus 0.10000000 0.33333333 0.15384615</span></span>
+<span><span class="co">#&gt;     Broad                           sars-cov-2 0.07407407 0.33333333 0.12121212</span></span>
+<span><span class="co">#&gt;     Broad                             pandemic 0.01562500 0.33333333 0.02985075</span></span>
+<span><span class="co">#&gt;     Broad                                covid 0.03314917 1.00000000 0.06417112</span></span>
 <span><span class="co">#&gt;  Targeted              covid-19 clinical trial 0.27777778 0.15384615 0.19801980</span></span>
 <span><span class="co">#&gt;  Targeted covid-19 randomized controlled trial 0.00000000 0.00000000 0.00000000</span></span>
 <span><span class="co">#&gt;  Targeted           covid-19 systematic review 0.00000000 0.00000000 0.00000000</span></span>
@@ -880,16 +880,16 @@ comprehensive reports.</p>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Analysis package created at:"</span>, <span class="va">package_dir</span>, <span class="st">"\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Analysis package created at: /tmp/RtmpbpJnlA/covid_search_strategy_comparison</span></span>
+<span><span class="co">#&gt; Analysis package created at: /tmp/Rtmp6yIS16/covid_search_strategy_comparison</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Individual exports created:\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Individual exports created:</span></span>
 <span><span class="kw">for</span> <span class="op">(</span><span class="va">file</span> <span class="kw">in</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">export_files_A</span>, <span class="va">export_files_B</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"-"</span>, <span class="va">file</span>, <span class="st">"\n"</span><span class="op">)</span></span>
 <span><span class="op">}</span></span>
-<span><span class="co">#&gt; - /tmp/RtmpbpJnlA/strategy_A_broad_covid.csv </span></span>
-<span><span class="co">#&gt; - /tmp/RtmpbpJnlA/strategy_A_broad_covid.xlsx </span></span>
-<span><span class="co">#&gt; - /tmp/RtmpbpJnlA/strategy_B_targeted_covid.csv </span></span>
-<span><span class="co">#&gt; - /tmp/RtmpbpJnlA/strategy_B_targeted_covid.xlsx</span></span></code></pre></div>
+<span><span class="co">#&gt; - /tmp/Rtmp6yIS16/strategy_A_broad_covid.csv </span></span>
+<span><span class="co">#&gt; - /tmp/Rtmp6yIS16/strategy_A_broad_covid.xlsx </span></span>
+<span><span class="co">#&gt; - /tmp/Rtmp6yIS16/strategy_B_targeted_covid.csv </span></span>
+<span><span class="co">#&gt; - /tmp/Rtmp6yIS16/strategy_B_targeted_covid.xlsx</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="summary">Summary<a class="anchor" aria-label="anchor" href="#summary"></a>
@@ -905,7 +905,7 @@ include:</p>
 <strong>Strategy A (Broad COVID Research)</strong>:
 <ul>
 <li>Retrieved 200 unique articles</li>
-<li>F1 Score: 0.073</li>
+<li>F1 Score: 0.044</li>
 <li>Best for: Comprehensive literature reviews, scoping studies</li>
 </ul>
 </li>
@@ -914,7 +914,7 @@ include:</p>
 <ul>
 <li>Retrieved 200 unique articles<br>
 </li>
-<li>F1 Score: 0.474</li>
+<li>F1 Score: 0.481</li>
 <li>Best for: Clinical guidelines, systematic reviews of
 interventions</li>
 </ul>
@@ -924,7 +924,7 @@ interventions</li>
 <ul>
 <li>Total unique articles when combined: 399</li>
 <li>Overlap: 1 articles (0.3%)</li>
-<li>Synergy Score: 0.183</li>
+<li>Synergy Score: 0.173</li>
 </ul>
 </li>
 </ol>

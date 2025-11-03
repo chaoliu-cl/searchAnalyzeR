@@ -63,7 +63,7 @@ Using COVID-19 Long-term Effects</h3>
                         <h4 data-toc-skip class="author">searchAnalyzeR
 Development Team</h4>
             
-            <h4 data-toc-skip class="date">2025-08-29</h4>
+            <h4 data-toc-skip class="date">2025-11-03</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/chaoliu-cl/searchAnalyzeR/blob/main/vignettes/Real_PubMed_Search_Analysis_with_searchAnalyzeR.Rmd" class="external-link"><code>vignettes/Real_PubMed_Search_Analysis_with_searchAnalyzeR.Rmd</code></a></small>
       <div class="d-none name"><code>Real_PubMed_Search_Analysis_with_searchAnalyzeR.Rmd</code></div>
@@ -422,6 +422,14 @@ search performance:</p>
 <code class="sourceCode R"><span></span>
 <span><span class="co"># Temporal distribution plot</span></span>
 <span><span class="va">temporal_plot</span> <span class="op">&lt;-</span> <span class="va">analyzer</span><span class="op">$</span><span class="fu">visualize_performance</span><span class="op">(</span><span class="st">"temporal"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Warning: Using `size` aesthetic for lines was deprecated in ggplot2 3.4.0.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Please use `linewidth` instead.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> The deprecated feature was likely used in the <span style="color: #0000BB;">searchAnalyzeR</span> package.</span></span>
+<span><span class="co">#&gt;   Please report the issue at</span></span>
+<span><span class="co">#&gt;   <span style="color: #0000BB; font-style: italic;">&lt;https://github.com/chaoliu-cl/searchAnalyzeR/issues&gt;</span>.</span></span>
+<span><span class="co">#&gt; <span style="color: #555555;">This warning is displayed once every 8 hours.</span></span></span>
+<span><span class="co">#&gt; <span style="color: #555555;">Call `lifecycle::last_lifecycle_warnings()` to see where this warning was</span></span></span>
+<span><span class="co">#&gt; <span style="color: #555555;">generated.</span></span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">temporal_plot</span><span class="op">)</span></span></code></pre></div>
 <p><img src="Real_PubMed_Search_Analysis_with_searchAnalyzeR_files/figure-html/visualizations-2.png" width="768"></p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
@@ -487,9 +495,9 @@ used in systematic reviews:</p>
 <span><span class="kw">for</span> <span class="op">(</span><span class="va">file</span> <span class="kw">in</span> <span class="va">export_files</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"-"</span>, <span class="va">file</span>, <span class="st">"\n"</span><span class="op">)</span></span>
 <span><span class="op">}</span></span>
-<span><span class="co">#&gt; - /tmp/RtmpdTy5nN/covid_long_term_search.csv </span></span>
-<span><span class="co">#&gt; - /tmp/RtmpdTy5nN/covid_long_term_search.xlsx </span></span>
-<span><span class="co">#&gt; - /tmp/RtmpdTy5nN/covid_long_term_search.ris</span></span></code></pre></div>
+<span><span class="co">#&gt; - /tmp/RtmpkYRBQB/covid_long_term_search.csv </span></span>
+<span><span class="co">#&gt; - /tmp/RtmpkYRBQB/covid_long_term_search.xlsx </span></span>
+<span><span class="co">#&gt; - /tmp/RtmpkYRBQB/covid_long_term_search.ris</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="metrics-export">Metrics Export<a class="anchor" aria-label="anchor" href="#metrics-export"></a>
@@ -504,7 +512,7 @@ reporting:</p>
 <span>  format <span class="op">=</span> <span class="st">"xlsx"</span></span>
 <span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"- Metrics exported to:"</span>, <span class="va">metrics_file</span>, <span class="st">"\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; - Metrics exported to: /tmp/RtmpdTy5nN/search_metrics.xlsx</span></span></code></pre></div>
+<span><span class="co">#&gt; - Metrics exported to: /tmp/RtmpkYRBQB/search_metrics.xlsx</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="comprehensive-data-package">Comprehensive Data Package<a class="anchor" aria-label="anchor" href="#comprehensive-data-package"></a>
@@ -528,7 +536,7 @@ analysis components:</p>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Data package created at:"</span>, <span class="va">package_dir</span>, <span class="st">"\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Data package created at: /tmp/RtmpdTy5nN/covid_long_term_systematic_review</span></span></code></pre></div>
+<span><span class="co">#&gt; Data package created at: /tmp/RtmpkYRBQB/covid_long_term_systematic_review</span></span></code></pre></div>
 </div>
 </div>
 <div class="section level2">
@@ -775,7 +783,7 @@ results:</p>
 <span><span class="co">#&gt; 9. Comprehensive reporting</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"\nAll outputs saved to:"</span>, <span class="va">output_dir</span>, <span class="st">"\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; All outputs saved to: /tmp/RtmpdTy5nN</span></span></code></pre></div>
+<span><span class="co">#&gt; All outputs saved to: /tmp/RtmpkYRBQB</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="files-generated">Files Generated<a class="anchor" aria-label="anchor" href="#files-generated"></a>
@@ -785,9 +793,9 @@ purposes:</p>
 <div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Clean up and provide final file locations</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/list.files.html" class="external-link">list.files</a></span><span class="op">(</span><span class="va">output_dir</span>, pattern <span class="op">=</span> <span class="st">"covid"</span>, full.names <span class="op">=</span> <span class="cn">TRUE</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] "/tmp/RtmpdTy5nN/covid_long_term_search.csv" </span></span>
-<span><span class="co">#&gt; [2] "/tmp/RtmpdTy5nN/covid_long_term_search.ris" </span></span>
-<span><span class="co">#&gt; [3] "/tmp/RtmpdTy5nN/covid_long_term_search.xlsx"</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] "/tmp/RtmpkYRBQB/covid_long_term_search.csv" </span></span>
+<span><span class="co">#&gt; [2] "/tmp/RtmpkYRBQB/covid_long_term_search.ris" </span></span>
+<span><span class="co">#&gt; [3] "/tmp/RtmpkYRBQB/covid_long_term_search.xlsx"</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="next-steps">Next Steps<a class="anchor" aria-label="anchor" href="#next-steps"></a>
@@ -817,7 +825,7 @@ review protocol or publication</li>
 <p>For more advanced features and customization options, consult:</p>
 <ul>
 <li>The package documentation:
-<code><a href="https://rdrr.io/pkg/searchAnalyzeR/man" class="external-link">help(package = "searchAnalyzeR")</a></code>
+<code><a href="http://liu-chao.site/searchAnalyzeR/reference">help(package = "searchAnalyzeR")</a></code>
 </li>
 <li>Function-specific help: <code><a href="../reference/search_pubmed.html">?search_pubmed</a></code>,
 <code><a href="../reference/SearchAnalyzer.html">?SearchAnalyzer</a></code>, etc.</li>
