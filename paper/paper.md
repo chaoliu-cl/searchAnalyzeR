@@ -7,14 +7,14 @@ tags:
   - information retrieval
   - bibliometric analysis
 authors:
-  - name: [Chao Liu]
+  - name: Chao Liu
     orcid: 0000-0002-9979-8272
     affiliation: 1
-  
+    corresponding: true
 affiliations:
- - name: [Cedarville University], [USA]
+ - name: Cedarville University
    index: 1
-date: [Current Date]
+date: 3 November 2025
 bibliography: paper.bib
 ---
 
