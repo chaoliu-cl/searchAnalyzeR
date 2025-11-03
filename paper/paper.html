@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>paper.md</title>
+<meta http-equiv="Content-type" content="text/html;charset=UTF-8">
+
+<style>
+/* https://github.com/microsoft/vscode/blob/master/extensions/markdown-language-features/media/markdown.css */
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+body {
+	font-family: var(--vscode-markdown-font-family, -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif);
+	font-size: var(--vscode-markdown-font-size, 14px);
+	padding: 0 26px;
+	line-height: var(--vscode-markdown-line-height, 22px);
+	word-wrap: break-word;
+}
+
+#code-csp-warning {
+	position: fixed;
+	top: 0;
+	right: 0;
+	color: white;
+	margin: 16px;
+	text-align: center;
+	font-size: 12px;
+	font-family: sans-serif;
+	background-color:#444444;
+	cursor: pointer;
+	padding: 6px;
+	box-shadow: 1px 1px 1px rgba(0,0,0,.25);
+}
+
+#code-csp-warning:hover {
+	text-decoration: none;
+	background-color:#007acc;
+	box-shadow: 2px 2px 2px rgba(0,0,0,.25);
+}
+
+body.scrollBeyondLastLine {
+	margin-bottom: calc(100vh - 22px);
+}
+
+body.showEditorSelection .code-line {
+	position: relative;
+}
+
+body.showEditorSelection .code-active-line:before,
+body.showEditorSelection .code-line:hover:before {
+	content: "";
+	display: block;
+	position: absolute;
+	top: 0;
+	left: -12px;
+	height: 100%;
+}
+
+body.showEditorSelection li.code-active-line:before,
+body.showEditorSelection li.code-line:hover:before {
+	left: -30px;
+}
+
+.vscode-light.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.15);
+}
+
+.vscode-light.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.40);
+}
+
+.vscode-light.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+.vscode-dark.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.4);
+}
+
+.vscode-dark.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.60);
+}
+
+.vscode-dark.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+.vscode-high-contrast.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 160, 0, 0.7);
+}
+
+.vscode-high-contrast.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 160, 0, 1);
+}
+
+.vscode-high-contrast.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+img {
+	max-width: 100%;
+	max-height: 100%;
+}
+
+a {
+	text-decoration: none;
+}
+
+a:hover {
+	text-decoration: underline;
+}
+
+a:focus,
+input:focus,
+select:focus,
+textarea:focus {
+	outline: 1px solid -webkit-focus-ring-color;
+	outline-offset: -1px;
+}
+
+hr {
+	border: 0;
+	height: 2px;
+	border-bottom: 2px solid;
+}
+
+h1 {
+	padding-bottom: 0.3em;
+	line-height: 1.2;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+}
+
+h1, h2, h3 {
+	font-weight: normal;
+}
+
+table {
+	border-collapse: collapse;
+}
+
+table > thead > tr > th {
+	text-align: left;
+	border-bottom: 1px solid;
+}
+
+table > thead > tr > th,
+table > thead > tr > td,
+table > tbody > tr > th,
+table > tbody > tr > td {
+	padding: 5px 10px;
+}
+
+table > tbody > tr + tr > td {
+	border-top: 1px solid;
+}
+
+blockquote {
+	margin: 0 7px 0 5px;
+	padding: 0 16px 0 10px;
+	border-left-width: 5px;
+	border-left-style: solid;
+}
+
+code {
+	font-family: Menlo, Monaco, Consolas, "Droid Sans Mono", "Courier New", monospace, "Droid Sans Fallback";
+	font-size: 1em;
+	line-height: 1.357em;
+}
+
+body.wordWrap pre {
+	white-space: pre-wrap;
+}
+
+pre:not(.hljs),
+pre.hljs code > div {
+	padding: 16px;
+	border-radius: 3px;
+	overflow: auto;
+}
+
+pre code {
+	color: var(--vscode-editor-foreground);
+	tab-size: 4;
+}
+
+/** Theming */
+
+.vscode-light pre {
+	background-color: rgba(220, 220, 220, 0.4);
+}
+
+.vscode-dark pre {
+	background-color: rgba(10, 10, 10, 0.4);
+}
+
+.vscode-high-contrast pre {
+	background-color: rgb(0, 0, 0);
+}
+
+.vscode-high-contrast h1 {
+	border-color: rgb(0, 0, 0);
+}
+
+.vscode-light table > thead > tr > th {
+	border-color: rgba(0, 0, 0, 0.69);
+}
+
+.vscode-dark table > thead > tr > th {
+	border-color: rgba(255, 255, 255, 0.69);
+}
+
+.vscode-light h1,
+.vscode-light hr,
+.vscode-light table > tbody > tr + tr > td {
+	border-color: rgba(0, 0, 0, 0.18);
+}
+
+.vscode-dark h1,
+.vscode-dark hr,
+.vscode-dark table > tbody > tr + tr > td {
+	border-color: rgba(255, 255, 255, 0.18);
+}
+
+</style>
+
+<style>
+/* Tomorrow Theme */
+/* http://jmblog.github.com/color-themes-for-google-code-highlightjs */
+/* Original theme - https://github.com/chriskempson/tomorrow-theme */
+
+/* Tomorrow Comment */
+.hljs-comment,
+.hljs-quote {
+	color: #8e908c;
+}
+
+/* Tomorrow Red */
+.hljs-variable,
+.hljs-template-variable,
+.hljs-tag,
+.hljs-name,
+.hljs-selector-id,
+.hljs-selector-class,
+.hljs-regexp,
+.hljs-deletion {
+	color: #c82829;
+}
+
+/* Tomorrow Orange */
+.hljs-number,
+.hljs-built_in,
+.hljs-builtin-name,
+.hljs-literal,
+.hljs-type,
+.hljs-params,
+.hljs-meta,
+.hljs-link {
+	color: #f5871f;
+}
+
+/* Tomorrow Yellow */
+.hljs-attribute {
+	color: #eab700;
+}
+
+/* Tomorrow Green */
+.hljs-string,
+.hljs-symbol,
+.hljs-bullet,
+.hljs-addition {
+	color: #718c00;
+}
+
+/* Tomorrow Blue */
+.hljs-title,
+.hljs-section {
+	color: #4271ae;
+}
+
+/* Tomorrow Purple */
+.hljs-keyword,
+.hljs-selector-tag {
+	color: #8959a8;
+}
+
+.hljs {
+	display: block;
+	overflow-x: auto;
+	color: #4d4d4c;
+	padding: 0.5em;
+}
+
+.hljs-emphasis {
+	font-style: italic;
+}
+
+.hljs-strong {
+	font-weight: bold;
+}
+</style>
+
+<style>
+/*
+ * Markdown PDF CSS
+ */
+
+ body {
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif, "Meiryo";
+	padding: 0 12px;
+}
+
+pre {
+	background-color: #f8f8f8;
+	border: 1px solid #cccccc;
+	border-radius: 3px;
+	overflow-x: auto;
+	white-space: pre-wrap;
+	overflow-wrap: break-word;
+}
+
+pre:not(.hljs) {
+	padding: 23px;
+	line-height: 19px;
+}
+
+blockquote {
+	background: rgba(127, 127, 127, 0.1);
+	border-color: rgba(0, 122, 204, 0.5);
+}
+
+.emoji {
+	height: 1.4em;
+}
+
+code {
+	font-size: 14px;
+	line-height: 19px;
+}
+
+/* for inline code */
+:not(pre):not(.hljs) > code {
+	color: #C9AE75; /* Change the old color so it seems less like an error */
+	font-size: inherit;
+}
+
+/* Page Break : use <div class="page"/> to insert page break
+-------------------------------------------------------- */
+.page {
+	page-break-after: always;
+}
+
+</style>
+
+<script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
+</head>
+<body>
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: document.body.classList.contains('vscode-dark') || document.body.classList.contains('vscode-high-contrast')
+          ? 'dark'
+          : 'default'
+    });
+  </script>
+<hr>
+<p>title: 'searchAnalyzeR: An R package for comprehensive analytics, reporting, and testing of systematic review search strategies'
+tags:</p>
+<ul>
+<li>R</li>
+<li>systematic review</li>
+<li>evidence synthesis</li>
+<li>information retrieval</li>
+<li>bibliometric analysis
+authors:</li>
+<li>name: [Chao Liu]
+orcid: 0000-0002-9979-8272
+affiliation: 1</li>
+</ul>
+<p>affiliations:</p>
+<ul>
+<li>name: [Cedarville University], [USA]
+index: 1
+date: [Current Date]
+bibliography: paper.bib</li>
+</ul>
+<hr>
+<h1 id="summary">Summary</h1>
+<p>The quality of systematic reviews fundamentally depends on the effectiveness of their search strategies, which must balance sensitivity (finding all relevant studies) with precision (minimizing irrelevant results). Developing optimal search strategies remains challenging, often relying on subjective methods rather than quantitative assessment. Despite the growing number of systematic reviews published annually—exceeding 80 per day by recent estimates [@hoffmann2021nearly]—few tools exist for quantitatively evaluating search performance. <code>searchAnalyzeR</code> is an R package that provides a comprehensive framework for developing, analyzing, and optimizing systematic review search strategies. The package connects with major bibliographic databases, standardizes heterogeneous outputs, and incorporates advanced duplicate detection algorithms. Beyond traditional precision-recall measures, <code>searchAnalyzeR</code> introduces the Term Effectiveness Score to evaluate individual search terms and workload-based metrics that quantify screening effort. Automated PRISMA-compliant reporting, visualization tools, and validation frameworks further enhance transparency and reproducibility in evidence synthesis across disciplines.</p>
+<h1 id="statement-of-need">Statement of need</h1>
+<p>Systematic reviews represent a cornerstone of evidence-based research and decision-making across disciplines, from healthcare to environmental science and public policy [@higgins2019cochrane]. However, the methods used to develop, evaluate, and optimize search strategies often lack standardization and quantitative rigor. Existing tools provide only partial support for search strategy development, with significant gaps in performance assessment and optimization [@marshall2014systematic].</p>
+<p>Commercial platforms such as Covidence and DistillerSR focus on screening and data extraction workflows but offer limited analytics for search evaluation. Reference management tools like EndNote and Zotero support citation organization and basic duplicate detection but lack search strategy assessment functionality. While specialized tools exist for specific aspects of systematic reviews, they typically operate in isolation, creating fragmented workflows that impede efficiency and reproducibility.</p>
+<p><code>searchAnalyzeR</code> addresses these limitations by providing:</p>
+<ol>
+<li>Quantitative metrics for search strategy evaluation, including novel measures like Term Effectiveness Score (TES) for assessing individual search terms' performance</li>
+<li>Direct database connectivity and standardized data processing to reduce manual export/import operations</li>
+<li>Advanced multi-algorithm duplicate detection that outperforms single-method approaches</li>
+<li>Systematic validation frameworks for cross-domain assessment and sensitivity analysis</li>
+<li>Automated PRISMA-compliant reporting and visualization for transparent documentation</li>
+</ol>
+<p>This unified approach streamlines the search optimization process, potentially reducing the substantial time and resources required for systematic reviews while improving methodological rigor and reproducibility. The package is particularly valuable for information specialists, systematic review methodologists, research teams conducting evidence syntheses, and academic institutions involved in evidence-based practice.</p>
+<h1 id="key-features">Key Features</h1>
+<p>The <code>searchAnalyzeR</code> package integrates multiple components to support comprehensive search strategy analysis, as shown in Figure 1.</p>
+<pre><code class="language-mermaid"><div class="mermaid">flowchart LR
+    subgraph DB[Data Input]
+        direction TB
+        A1[PubMed\nConnector]:::dataInput
+        A2[Bibliographic\nImport]:::dataInput
+        A3[Manual\nData Entry]:::dataInput
+    end
+    
+    subgraph DP[Data Processing]
+        direction TB
+        B1[Data\nStandardization]:::dataProcessing
+        B2[Duplicate\nDetection]:::dataProcessing
+        B3[Screening\nData Extraction]:::dataProcessing
+    end
+    
+    subgraph AN[Analysis]
+        direction TB
+        C1[Performance\nMetrics]:::analysis
+        C2[Strategy\nValidation]:::analysis
+        C3[Term\nEffectiveness]:::analysis
+    end
+    
+    subgraph RP[Reporting]
+        direction TB
+        D1[Data\nVisualization]:::reporting
+        D2[PRISMA\nDiagram]:::reporting
+        D3[Report\nExport]:::reporting
+    end
+    
+    A1 --> B1
+    A2 --> B1
+    A3 --> B1
+    B1 --> B2
+    B2 --> B3
+    B3 --> C1
+    C1 --> C2
+    C1 --> C3
+    C1 --> D1
+    C2 --> D1
+    C3 --> D1
+    B3 --> D2
+    D1 --> D3
+    D2 --> D3
+    
+    classDef dataInput fill:#E8F4FD,stroke:#2E86AB,stroke-width:1px
+    classDef dataProcessing fill:#FFF2E8,stroke:#F18F01,stroke-width:1px
+    classDef analysis fill:#F1E9F5,stroke:#A23B72,stroke-width:1px
+    classDef reporting fill:#E8F5E9,stroke:#388E3C,stroke-width:1px
+</div></code></pre>
+<p><strong>Figure 1.</strong> Workflow diagram showing the main components and functionality of the searchAnalyzeR package. Color coding indicates different functional areas: data input (blue), data processing (orange), analysis (purple), and reporting (green).</p>
+<h2 id="novel-term-effectiveness-score">Novel Term Effectiveness Score</h2>
+<p>A key innovation of the package is the Term Effectiveness Score (TES), which evaluates individual search term performance by combining precision and coverage measures:</p>
+<p>$$TES = \frac{2 \times Precision \times Coverage}{Precision + Coverage}$$</p>
+<p>Unlike traditional F1 scoring, TES emphasizes term-specific coverage rather than overall strategy recall, helping researchers identify which terms contribute most effectively to their search strategy. This granular analysis enables targeted optimization that traditional aggregate metrics cannot provide.</p>
+<h2 id="multi-method-duplicate-detection">Multi-method Duplicate Detection</h2>
+<p>The package implements three complementary deduplication approaches to address the challenge of heterogeneous database outputs:</p>
+<ol>
+<li><strong>Exact matching</strong>: Using composite keys from normalized titles and abstracts</li>
+<li><strong>DOI-based matching</strong>: Standardized DOI comparison after normalization</li>
+<li><strong>Fuzzy matching</strong>: Jaro-Winkler string distance with configurable thresholds</li>
+</ol>
+<p>This multi-method approach significantly improves deduplication accuracy compared to single-method techniques commonly used in reference management software.</p>
+<h2 id="cross-domain-validation-framework">Cross-domain Validation Framework</h2>
+<p>The <code>BenchmarkValidator</code> class enables systematic testing against established benchmark datasets:</p>
+<pre class="hljs"><code><div>validator &lt;- BenchmarkValidator$new()
+validator$add_benchmark(<span class="hljs-string">"medical_topic"</span>, benchmark_corpus, relevant_ids)
+results &lt;- validator$cross_domain_validation(search_strategy)
+</div></code></pre>
+<p>This framework supports cross-domain validation to assess how strategies perform across different research areas—a capability absent from existing tools. The validation methodology includes systematic partitioning, stratified sampling, and comprehensive performance assessment.</p>
+<h2 id="reproducibility-tools">Reproducibility Tools</h2>
+<p>To ensure computational reproducibility, the package implements data packaging functionality that bundles search parameters, results, and analytical decisions into a structured format suitable for transparent reporting and independent verification.</p>
+<h1 id="example-covid-19-long-term-effects-search-strategy-analysis">Example: COVID-19 Long-term Effects Search Strategy Analysis</h1>
+<p>To demonstrate the practical utility of <code>searchAnalyzeR</code>, we present a complete workflow analyzing a search strategy for COVID-19 long-term effects research:</p>
+<pre class="hljs"><code><div><span class="hljs-comment"># Define comprehensive search strategy</span>
+search_strategy &lt;- list(
+  terms = c(
+    <span class="hljs-string">"long covid"</span>,
+    <span class="hljs-string">"post-covid syndrome"</span>,
+    <span class="hljs-string">"covid-19 sequelae"</span>,
+    <span class="hljs-string">"post-acute covid-19"</span>,
+    <span class="hljs-string">"persistent covid symptoms"</span>
+  ),
+  databases = c(<span class="hljs-string">"PubMed"</span>),
+  date_range = as.Date(c(<span class="hljs-string">"2020-01-01"</span>, <span class="hljs-string">"2024-12-31"</span>))
+)
+
+<span class="hljs-comment"># Execute search and process results</span>
+raw_results &lt;- search_pubmed(
+  search_terms = search_strategy$terms, 
+  max_results = <span class="hljs-number">150</span>
+)
+standardized_results &lt;- std_search_results(
+  raw_results, 
+  source_format = <span class="hljs-string">"pubmed"</span>
+)
+dedup_results &lt;- detect_dupes(
+  standardized_results, 
+  method = <span class="hljs-string">"exact"</span>
+)
+
+<span class="hljs-comment"># Create a demonstration gold standard</span>
+gold_standard_ids &lt;- dedup_results %&gt;%
+  filter(!duplicate) %&gt;%
+  filter(grepl(<span class="hljs-string">"long covid|post-covid|post-acute covid"</span>, 
+               tolower(title))) %&gt;%
+  pull(id)
+
+<span class="hljs-comment"># Initialize analyzer and calculate metrics</span>
+analyzer &lt;- SearchAnalyzer$new(
+  search_results = filter(dedup_results, !duplicate),
+  gold_standard = gold_standard_ids,
+  search_strategy = search_strategy
+)
+metrics &lt;- analyzer$calculate_metrics()
+
+<span class="hljs-comment"># Analyze term effectiveness</span>
+term_analysis &lt;- term_effectiveness(
+  terms = search_strategy$terms,
+  search_results = filter(dedup_results, !duplicate),
+  gold_standard = gold_standard_ids
+)
+term_scores &lt;- calc_tes(term_analysis)
+</div></code></pre>
+<p>The search strategy performance metrics are summarized in Table 1, showing excellent recall but moderate precision, indicating the strategy successfully retrieved all relevant articles while also capturing a substantial number of irrelevant ones.</p>
+<p><strong>Table 1.</strong> Search Strategy Performance Metrics</p>
+<p><strong>Table 1.</strong> Search Strategy Performance Metrics</p>
+<table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th><strong>Value</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Precision</td>
+<td>0.553</td>
+</tr>
+<tr>
+<td>Recall</td>
+<td>1.000</td>
+</tr>
+<tr>
+<td>F1 Score</td>
+<td>0.712</td>
+</tr>
+<tr>
+<td>Number Needed to Read</td>
+<td>1.8</td>
+</tr>
+<tr>
+<td>---</td>
+<td>---</td>
+</tr>
+</tbody>
+</table>
+<pre class="hljs"><code><div><span class="hljs-comment"># Generate a bar graph for an overview of the search performance</span>
+overview_plot &lt;- analyzer$visualize_performance(<span class="hljs-string">"overview"</span>)
+</div></code></pre>
+<p><img src="fig2_overview.png" alt=""></p>
+<p>The term effectiveness analysis (Table 2) revealed significant variation in individual search term performance, with &quot;long covid&quot; demonstrating the best balance between precision and coverage. Figure 1 present an overview of the performance of the search.</p>
+<p><strong>Table 2.</strong> Individual Term Effectiveness Analysis</p>
+<table>
+<thead>
+<tr>
+<th><strong>Search Term</strong></th>
+<th><strong>Articles Retrieved</strong></th>
+<th><strong>Relevant Articles</strong></th>
+<th><strong>Precision</strong></th>
+<th><strong>Coverage</strong></th>
+<th><strong>TES</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>long covid</td>
+<td>85</td>
+<td>60</td>
+<td>0.706</td>
+<td>0.723</td>
+<td>0.714</td>
+</tr>
+<tr>
+<td>post-acute covid-19</td>
+<td>14</td>
+<td>10</td>
+<td>0.714</td>
+<td>0.120</td>
+<td>0.206</td>
+</tr>
+<tr>
+<td>post-covid syndrome</td>
+<td>5</td>
+<td>5</td>
+<td>1.000</td>
+<td>0.060</td>
+<td>0.113</td>
+</tr>
+<tr>
+<td>covid-19 sequelae</td>
+<td>5</td>
+<td>1</td>
+<td>0.200</td>
+<td>0.012</td>
+<td>0.023</td>
+</tr>
+<tr>
+<td>persistent covid symptoms</td>
+<td>0</td>
+<td>0</td>
+<td>0.000</td>
+<td>0.000</td>
+<td>0.000</td>
+</tr>
+<tr>
+<td>---</td>
+<td>---</td>
+<td>---</td>
+<td>---</td>
+<td>---</td>
+<td>---</td>
+</tr>
+</tbody>
+</table>
+<p><em>TES = Term Effectiveness Score (harmonic mean of precision and coverage)</em><br>
+<em>Top performing term: long covid (TES = 0.714)</em></p>
+<p>Figure 3 provides a visualization of the term effectiveness analysis that illustrates the relationship between precision, coverage, and the number of articles retrieved for each search term. The bubble plot highlights &quot;long covid&quot; as the most effective term, with both high precision and broad coverage, while terms like &quot;persistent covid symptoms&quot; retrieved no articles.</p>
+<p><img src="fig3_terms.png" alt="Top 3 performing search terms based on precision and coverage. Bubble size represents the number of articles retrieved by each term.\label{fig:term_effectiveness}"></p>
+<p>This analysis demonstrates how <code>searchAnalyzeR</code> enables quantitative assessment of search strategy performance, term-level analysis for optimization, and automated generation of publication-ready visualizations—all within a unified framework.</p>
+<h1 id="references">References</h1>
+
+</body>
+</html>
